@@ -1,0 +1,426 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────
+   Responsive breakpoints + Tailwind radius
+   @theme maps Tailwind's --radius-* to CDS
+   design tokens so rounded-md / rounded-lg
+   etc. automatically track the active theme.
+───────────────────────────────────────── */
+@theme {
+  --breakpoint-sm:  640px;
+  --breakpoint-md:  768px;
+  --breakpoint-lg:  1024px;
+  --breakpoint-xl:  1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* Tailwind radius scale → CDS tokens */
+  --radius-sm:   4px;
+  --radius-md:   var(--cds-radius);
+  --radius-lg:   var(--cds-radius-lg);
+  --radius-xl:   16px;
+  --radius-2xl:  20px;
+  --radius-3xl:  24px;
+  --radius-full: var(--cds-radius-full);
+}
+
+/* ─────────────────────────────────────────
+   HarmonyOS Sans — self-hosted TTF (Latin)
+   Weights: 400 Regular / 500 Medium / 700 Bold
+───────────────────────────────────────── */
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  src: url('/fonts/HarmonyOS_Sans_Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  src: url('/fonts/HarmonyOS_Sans_Medium.ttf') format('truetype');
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  src: url('/fonts/HarmonyOS_Sans_Bold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+
+/* JetBrains Mono — Apache 2.0, used for code / API keys / hashes */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; }
+*:focus, *:focus-visible { outline: none !important; }
+
+/* ─────────────────────────────────────────
+   Primitive palette (single scale, theme-agnostic)
+   0 = lightest, 1000 = darkest.
+   Never reference directly in components —
+   always use semantic tokens below.
+───────────────────────────────────────── */
+:root {
+  /* ── Full-scale palettes (13 stops) ── */
+
+  /* 1. Purple */
+  --purple-0: #ffffff; --purple-50: #ede8fd; --purple-100: #e7dffb;
+  --purple-200: #c5b4f4; --purple-300: #a085ea; --purple-400: #7853df;
+  --purple-500: #4e25c1; --purple-600: #3d1d96; --purple-700: #311778;
+  --purple-800: #281362; --purple-900: #211050; --purple-950: #20113e; --purple-1000: #11072c;
+
+  /* 2. Cyan */
+  --cyan-0: #ffffff; --cyan-50: #f3fcfc; --cyan-100: #e3f7f7;
+  --cyan-200: #bcecea; --cyan-300: #93ddda; --cyan-400: #5ecac6;
+  --cyan-500: #379e9a; --cyan-600: #2a7e7b; --cyan-700: #206563;
+  --cyan-800: #184f4d; --cyan-900: #113b3a; --cyan-950: #0d2d2d; --cyan-1000: #092020;
+
+  /* 3. Neutral */
+  --neutral-0: #ffffff; --neutral-50: #fafafa; --neutral-100: #eaeaea;
+  --neutral-200: #d6d6d6; --neutral-300: #b8b8b8; --neutral-400: #969696;
+  --neutral-500: #757575; --neutral-600: #595959; --neutral-700: #454545;
+  --neutral-800: #333333; --neutral-900: #212121; --neutral-950: #181818; --neutral-1000: #0f0f0f;
+
+  /* 4. Blue (info) */
+  --blue-0: #ffffff; --blue-50: #f1f5fe; --blue-100: #e3ebfc;
+  --blue-200: #ccdbfb; --blue-300: #b1c9f9; --blue-400: #8db0f6;
+  --blue-500: #4b82f1; --blue-600: #3e6bc8; --blue-700: #31559f;
+  --blue-800: #25417a; --blue-900: #1b2f59; --blue-950: #162648; --blue-1000: #111e38;
+
+  /* 5. Green (success) */
+  --green-0: #ffffff; --green-50: #edf9ee; --green-100: #dcf3de;
+  --green-200: #c0e9c3; --green-300: #a0dda5; --green-400: #73cd7b;
+  --green-500: #23b12f; --green-600: #1d9227; --green-700: #17741f;
+  --green-800: #115917; --green-900: #0c4111; --green-950: #0a350e; --green-1000: #08290b;
+
+  /* 6. Amber (warning) */
+  --amber-0: #ffffff; --amber-50: #fff9ee; --amber-100: #fff3de;
+  --amber-200: #ffebc4; --amber-300: #ffe1a5; --amber-400: #ffd37c;
+  --amber-500: #ffba30; --amber-600: #d39a27; --amber-700: #a87a1f;
+  --amber-800: #815d18; --amber-900: #5e4411; --amber-950: #4d370e; --amber-1000: #3b2a0b;
+
+  /* 7. Orange (critical) */
+  --orange-0: #ffffff; --orange-50: #fff5ef; --orange-100: #feebe0;
+  --orange-200: #fddac6; --orange-300: #fdc7a9; --orange-400: #fcac80;
+  --orange-500: #fa7c37; --orange-600: #cf662d; --orange-700: #a45124;
+  --orange-800: #7e3e1b; --orange-900: #5c2d14; --orange-950: #4b2510; --orange-1000: #3a1c0c;
+
+  /* 8. Red (danger) */
+  --red-0: #ffffff; --red-50: #feefef; --red-100: #fde0e0;
+  --red-200: #fcc7c7; --red-300: #faabab; --red-400: #f88484;
+  --red-500: #f53d3d; --red-600: #cb3232; --red-700: #a12828;
+  --red-800: #7b1e1e; --red-900: #5a1616; --red-950: #491212; --red-1000: #380e0e;
+
+  /* ── Graphic palettes (chart/data-viz only, 200–800) ── */
+
+  --graphic-blue-200: #b8ccf0; --graphic-blue-300: #88abe7; --graphic-blue-400: #5c8de0;
+  --graphic-blue-500: #3270d9; --graphic-blue-600: #1f53ad; --graphic-blue-700: #163e83; --graphic-blue-800: #0e2958;
+
+  --graphic-teal-200: #bbe7ec; --graphic-teal-300: #8ed9e1; --graphic-teal-400: #65ccd7;
+  --graphic-teal-500: #33becc; --graphic-teal-600: #2898a4; --graphic-teal-700: #1d727c; --graphic-teal-800: #134d53;
+
+  --graphic-mint-200: #b8f0dc; --graphic-mint-300: #88e7c6; --graphic-mint-400: #5ce0b2;
+  --graphic-mint-500: #32d99f; --graphic-mint-600: #1fad7b; --graphic-mint-700: #16835d; --graphic-mint-800: #0e583e;
+
+  --graphic-avocado-200: #eaf0b8; --graphic-avocado-300: #dee788; --graphic-avocado-400: #d3e05c;
+  --graphic-avocado-500: #c8d932; --graphic-avocado-600: #9fad1f; --graphic-avocado-700: #788316; --graphic-avocado-800: #50580e;
+
+  --graphic-sunset-200: #f0cbb8; --graphic-sunset-300: #e7a988; --graphic-sunset-400: #e08a5c;
+  --graphic-sunset-500: #d96d32; --graphic-sunset-600: #ad511f; --graphic-sunset-700: #833c16; --graphic-sunset-800: #58280e;
+}
+
+/* ─────────────────────────────────────────
+   Semantic tokens — Light theme (default)
+───────────────────────────────────────── */
+:root {
+  /* Surfaces — elevation model */
+  --bg:              var(--neutral-50);
+  --surface:         var(--neutral-50);
+  --surface-overlay: var(--neutral-0);
+  --fill:            var(--neutral-100);
+  --fill-hover:      var(--neutral-0);
+  --item-hover:      var(--neutral-100);   /* sidebar rows, nav items */
+  --surface-glass:   rgba(250, 250, 250, 0.85);
+  --surface-disabled: var(--neutral-200);
+
+  /* Borders */
+  --border:        var(--neutral-100);
+  --border-strong: var(--neutral-200);
+
+  /* Text */
+  --text:     var(--neutral-1000);
+  --muted:    var(--neutral-600);
+  --subtle:   var(--neutral-400);
+  --disabled: var(--neutral-500);
+
+  /* Accent (Purple) */
+  --accent:           var(--purple-700);
+  --accent-hover:     var(--purple-500);
+  --accent-secondary: var(--purple-300);
+  --accent-subtle:    var(--purple-50);
+  --accent-text:      var(--purple-600);
+
+
+  /* Text-on-accent — for text/icon on accent-colored backgrounds */
+  --on-primary: var(--neutral-0);
+
+  /* White-label semantic extensions */
+  --overlay-backdrop: rgba(0, 0, 0, 0.45);
+
+  /* Status — Success */
+  --success:        var(--green-500);
+  --success-bg:     var(--green-100);
+  --success-border: var(--green-200);
+  --success-text:   var(--green-700);
+
+  /* Status — Danger */
+  --danger:        var(--red-500);
+  --danger-bg:     var(--red-50);
+  --danger-border: var(--red-200);
+  --danger-text:   var(--red-600);
+
+  /* Status — Warning */
+  --warning:        var(--amber-500);
+  --warning-bg:     var(--amber-50);
+  --warning-border: var(--amber-200);
+  --warning-text:   var(--amber-600);
+
+  /* Status — Info */
+  --info:        var(--blue-500);
+  --info-bg:     var(--blue-50);
+  --info-border: var(--blue-200);
+  --info-text:   var(--blue-600);
+
+  /* Status — Primary (brand accent as status) */
+  --primary:        var(--purple-700);
+  --primary-bg:     var(--purple-50);
+  --primary-border: var(--purple-200);
+  --primary-text:   var(--purple-600);
+
+  /* Status — Neutral */
+  --neutral:        var(--neutral-500);
+  --neutral-bg:     var(--neutral-100);
+  --neutral-border: var(--neutral-200);
+  --neutral-text:   var(--neutral-600);
+
+  /* Shadows */
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.06);
+  --shadow:         0 2px 8px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-lg:      0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-overlay: 0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+
+  /* Layout */
+  --header-h:            60px;
+  --sidebar-w:           220px;
+  --sidebar-px:          16px;
+
+  /* Shape — CDS radius tokens (themeable, do not reference Tailwind --radius-*) */
+  --cds-radius:      8px;
+  --cds-radius-lg:   12px;
+  --cds-radius-full: 9999px;
+
+  /* Typography */
+  --font: 'HarmonyOS Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Logo */
+  --logo-fill: var(--purple-900);
+}
+
+/* ─────────────────────────────────────────
+   Semantic tokens — Dark theme
+───────────────────────────────────────── */
+[data-theme="dark"] {
+  /* Surfaces */
+  --bg:              var(--neutral-950);
+  --surface:         var(--neutral-950);
+  --surface-overlay: var(--neutral-1000);
+  --fill:            var(--neutral-900);
+  --fill-hover:      var(--neutral-1000);
+  --item-hover:      var(--neutral-900);
+  --surface-glass:   rgba(24, 24, 24, 0.85);
+  --surface-disabled: var(--neutral-800);
+
+  /* Borders */
+  --border:        var(--neutral-900);
+  --border-strong: var(--neutral-800);
+
+  /* Text */
+  --text:     var(--neutral-0);
+  --muted:    var(--neutral-400);
+  --subtle:   var(--neutral-600);
+  --disabled: var(--neutral-500);
+
+  /* Text-on-accent */
+  --on-primary: var(--neutral-0);
+
+  /* Accent (Purple) */
+  --accent:            var(--purple-300);
+  --accent-hover:      var(--purple-500);
+  --accent-secondary:  var(--purple-700);
+  --accent-subtle:     var(--purple-900);
+  --accent-text:       var(--purple-400);
+
+
+  /* White-label semantic extensions */
+  --overlay-backdrop: rgba(0, 0, 0, 0.45);
+
+  /* Status — Success */
+  --success:        var(--green-500);
+  --success-bg:     var(--green-950);
+  --success-border: var(--green-800);
+  --success-text:   var(--green-300);
+
+  /* Status — Danger */
+  --danger:        var(--red-500);
+  --danger-bg:     var(--red-950);
+  --danger-border: var(--red-800);
+  --danger-text:   var(--red-400);
+
+  /* Status — Warning */
+  --warning:        var(--amber-500);
+  --warning-bg:     var(--amber-950);
+  --warning-border: var(--amber-800);
+  --warning-text:   var(--amber-300);
+
+  /* Status — Info */
+  --info:        var(--blue-500);
+  --info-bg:     var(--blue-950);
+  --info-border: var(--blue-800);
+  --info-text:   var(--blue-400);
+
+  /* Status — Primary */
+  --primary:        var(--purple-300);
+  --primary-bg:     var(--purple-950);
+  --primary-border: var(--purple-800);
+  --primary-text:   var(--purple-400);
+
+  /* Status — Neutral */
+  --neutral:        var(--neutral-500);
+  --neutral-bg:     var(--neutral-900);
+  --neutral-border: var(--neutral-800);
+  --neutral-text:   var(--neutral-400);
+
+  /* Shadows (deeper in dark) */
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.30);
+  --shadow:         0 2px 8px rgba(0,0,0,0.28), 0 1px 3px rgba(0,0,0,0.20);
+  --shadow-lg:      0 8px 24px rgba(0,0,0,0.32), 0 2px 6px rgba(0,0,0,0.22);
+  --shadow-overlay: 0 16px 48px rgba(0,0,0,0.44), 0 4px 12px rgba(0,0,0,0.30);
+
+  /* Logo */
+  --logo-fill: var(--neutral-0);
+}
+
+/* ─────────────────────────────────────────
+   Base
+───────────────────────────────────────── */
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, select, textarea, optgroup {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ── Custom select arrow ────────────────── */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23868fa0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 13px 13px;
+  padding-right: 32px;
+}
+[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239090a8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+/* ─────────────────────────────────────────
+   Typography scale
+   Size + line-height only — font-weight is
+   intentionally excluded. Combine with
+   Tailwind weight utilities.
+───────────────────────────────────────── */
+.type-display-1 { font-size: 64px; line-height: 80px; letter-spacing: -0.025em; }
+.type-display-2 { font-size: 56px; line-height: 74px; letter-spacing: -0.025em; }
+.type-display-3 { font-size: 40px; line-height: 58px; letter-spacing: -0.02em;  }
+
+.type-h1       { font-size: 34px; line-height: 48px; letter-spacing: -0.02em;  }
+.type-h2       { font-size: 28px; line-height: 40px; letter-spacing: -0.015em; }
+.type-h3       { font-size: 24px; line-height: 32px; letter-spacing: -0.01em;  }
+.type-h4       { font-size: 22px; line-height: 32px; letter-spacing: -0.01em;  }
+.type-h5       { font-size: 18px; line-height: 28px; }
+.type-body-lg  { font-size: 16px; line-height: 24px; }
+.type-body     { font-size: 14px; line-height: 20px; }
+.type-body-sm  { font-size: 12px; line-height: 16px; }
+.type-caption  { font-size: 12px; line-height: 16px; }
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ─────────────────────────────────────────
+   Numerals
+───────────────────────────────────────── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" on, "lnum" on;
+}
+
+/* ─────────────────────────────────────────
+   Global page-layout primitives
+───────────────────────────────────────── */
+
+/* ── Sparkle animation (AgentX button icon) ─────────────── */
+@keyframes sparkle {
+  0%, 100% { opacity: 1;    transform: scale(1)    rotate(0deg);   }
+  40%       { opacity: 0.7; transform: scale(0.85) rotate(-12deg); }
+  70%       { opacity: 1;   transform: scale(1.1)  rotate(8deg);   }
+}
+.animate-sparkle { animation: sparkle 2.4s ease-in-out infinite; }
+
+/* ── Fade-in animation (backdrop overlay) ─────────────── */
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+.animate-fade-in { animation: fade-in 200ms ease-out; }
+
+@keyframes slideDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes modalIn { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes drawerSlideIn { from { transform: translateX(100%) } to { transform: translateX(0) } }
+@keyframes drawerSlideInLeft { from { transform: translateX(-100%) } to { transform: translateX(0) } }
+
+.pageTitle {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 40px;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+.pageSubtitle {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── Theme circle-reveal transition ─────────────── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
