@@ -20,6 +20,9 @@ export type AnomalousReason =
 
 export type PaymentChannel = 'GLDB' | 'SGB' | 'TransferMate' | 'Tazapay'
 
+/** Order type — only deposits exist today; reserved for future order kinds. */
+export type OrderType = 'deposit'
+
 export type PartyClassification = '1st_party' | '3rd_party' | 'unclassified'
 
 export type ScreeningResult = 'pass' | 'pending_review' | 'rejected' | 'rfi'
@@ -36,6 +39,8 @@ export interface RefundInfo {
 export interface DepositOrder {
   id:                   string
   transaction_id:       string
+  /** Order kind — currently always 'deposit'; reserved for future expansion. */
+  order_type:           OrderType
   payment_channel:      PaymentChannel
   amount_minor:         number
   currency:             string
@@ -54,6 +59,7 @@ export interface DepositOrder {
   beneficiary_name:     string | null
   beneficiary_account:  string | null
   beneficiary_code:     string | null
+  beneficiary_bank_name: string | null
   // Matching
   reference_code:       string | null
   matched_rule_step:    number | null

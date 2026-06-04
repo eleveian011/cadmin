@@ -2,13 +2,15 @@ import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { NavLink } from 'react-router-dom'
 import {
-  Wallet, SwatchBook,
-  ClipboardList, ReceiptText,
-  MoreHorizontal, Sun, Moon, LogOut,
+  SwatchBook,
+  ClipboardList, ReceiptText, Landmark,
+  MoreHorizontal, Sun, Moon, LogOut, Menu,
   type LucideIcon,
 } from 'lucide-react'
 import { CdsAvatar, CdsMenuItem } from '../../components/cds'
 import { useTheme } from '../../hooks/useTheme'
+import { useTaskBadgeCount } from '../../services/hooks'
+import Logo from './Logo'
 
 interface LeafNavItem {
   to:    string
@@ -19,10 +21,10 @@ interface LeafNavItem {
 type NavItem = LeafNavItem
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/assets',          Icon: Wallet,        label: 'Assets' },
-  { to: '/cds-guideline',   Icon: SwatchBook,    label: 'CDS Guideline' },
   { to: '/task-center',     Icon: ClipboardList, label: 'Task Center' },
   { to: '/orders',          Icon: ReceiptText,   label: 'Order Management' },
+  { to: '/channel-accounts', Icon: Landmark,     label: 'Fiat Account Mapping' },
+  { to: '/cds-guideline',   Icon: SwatchBook,    label: 'CDS Guideline' },
 ]
 
 const ROW = [
@@ -125,35 +127,61 @@ function ProfileMenu() {
   )
 }
 interface SidebarProps {
-  isMobile?:   boolean
-  mobileOpen?: boolean
-  onClose?:    () => void
+  isMobile?:       boolean
+  mobileOpen?:     boolean
+  onClose?:        () => void
+  onMobileToggle?: () => void
 }
 
-export default function Sidebar({ isMobile = false, mobileOpen = false, onClose }: SidebarProps) {
+export default function Sidebar({ isMobile = false, mobileOpen = false, onClose, onMobileToggle }: SidebarProps) {
+  const { data: taskBadge } = useTaskBadgeCount()
+  const taskCount = taskBadge?.badgeCount ?? 0
+
   const asideClasses = [
-    'fixed bottom-0 left-0 flex flex-col',
+    'fixed bottom-0 left-0 top-0 flex flex-col',
     'border-r border-(--border) bg-(--surface)',
     isMobile
-      ? `top-0 z-110 w-(--sidebar-w) transition-transform duration-300 ease-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`
-      : 'top-(--header-h) z-90 w-(--sidebar-w)',
+      ? `z-110 w-(--sidebar-w) transition-transform duration-300 ease-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`
+      : 'z-90 w-(--sidebar-w)',
   ].join(' ')
 
   return (
     <aside className={asideClasses}>
+      {/* Logo header */}
+      <div className="flex h-(--header-h) shrink-0 items-center gap-2 border-b border-(--border) px-(--sidebar-px)">
+        {isMobile && onMobileToggle && (
+          <button
+            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center text-(--muted) transition-colors hover:text-(--text)"
+            onClick={onMobileToggle}
+            title="Toggle menu"
+          >
+            <Menu size={18} />
+          </button>
+        )}
+        <Logo height={28} />
+      </div>
+
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-none">
         <nav className="py-2.5">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={() => onClose?.()}
-              className={({ isActive }) => isActive ? ROW_ACTIVE : ROW_DEFAULT}
-            >
-              <item.Icon size={15} className="shrink-0 opacity-80" />
-              <span className="flex-1 truncate">{item.label}</span>
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const badge = item.to === '/task-center' ? taskCount : 0
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={() => onClose?.()}
+                className={({ isActive }) => isActive ? ROW_ACTIVE : ROW_DEFAULT}
+              >
+                <item.Icon size={15} className="shrink-0 opacity-80" />
+                <span className="flex-1 truncate">{item.label}</span>
+                {badge > 0 && (
+                  <span className="shrink-0 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-(--danger) text-(--on-primary) type-caption font-bold tabular-nums">
+                    {badge}
+                  </span>
+                )}
+              </NavLink>
+            )
+          })}
         </nav>
       </div>
       <div className="shrink-0">

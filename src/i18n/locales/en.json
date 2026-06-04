@@ -3,21 +3,28 @@
     "search": "Search",
     "reset": "Reset",
     "export": "Export",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "save": "Save",
     "viewInTaskCenter": "View in Task Center",
+    "viewTask": "View Task",
     "unknown": "Unknown",
-    "na": "—"
+    "na": "—",
+    "done": "Done"
   },
   "nav": {
     "taskCenter": "Task Center",
     "orders": "Order Management",
     "abnormalOrders": "Abnormal Orders",
-    "allOrders": "All Orders"
+    "allOrders": "All Orders",
+    "channelAccounts": "Fiat Account Mapping"
   },
   "taskCenter": {
     "title": "Task Center",
     "tabs": {
       "active": "All Pending",
       "mine": "My Tasks",
+      "fyi": "FYI Task",
       "completed": "History"
     },
     "card": {
@@ -28,8 +35,12 @@
     "actions": {
       "claim": "Accept",
       "unclaim": "Release",
+      "assign": "Assign",
+      "reassign": "Reassign",
       "complete": "Mark Complete",
       "addNote": "Add Note",
+      "saveNote": "Save Note",
+      "proceed": "Proceed",
       "confirmRecipient": "Confirm Recipient & Proceed",
       "rejectRefund": "Reject / Refund",
       "retry": "Retry Crediting",
@@ -57,14 +68,26 @@
     },
     "panel": {
       "candidates": "Potential Matches",
-      "noCandidates": "No candidate matches found. Investigate manually, then reject/refund if unresolvable.",
+      "noCandidates": "No candidate matches found. Use manual search below, or reject/refund if the sender cannot be identified.",
+      "recipientCaution": "Verify the recipient carefully before confirming. Matching to the wrong entity may result in incorrect fund crediting.",
+      "manualSearch": "Manual Search",
+      "manualSearchPlaceholder": "Search all clients by name or participant code…",
+      "searching": "Searching…",
+      "noSearchResults": "No clients match your search.",
+      "loadingDeposit": "Loading deposit details…",
+      "depositUnavailable": "Deposit details unavailable.",
+      "ageingTitle": "Time Waiting",
+      "ageingWithin": "Within the {{threshold}}h urgency threshold.",
+      "ageingPast": "Past the {{threshold}}h urgency threshold — needs attention.",
+      "statusBlockedTitle": "Crediting Blocked — Account Status",
+      "statusBlockedAction": "Resolve the account status in CAMP, then click Retry to re-run the deposit from classification onward.",
       "classify": "Party Classification",
       "nameMatchScore": "Name match score",
       "ambiguousRange": "in the ambiguous range (0.5–0.85), manual confirmation required",
       "firstPartyHint": "Sender is the account holder — fewer mandatory fields",
       "thirdPartyHint": "Sender differs from account holder — requires payment reference",
       "missingFields": "Missing Mandatory Fields",
-      "missingFieldsHint": "Fill in the missing fields if the client has provided them directly. Once complete, the deposit proceeds to screening.",
+      "missingFieldsHint": "FYI only — the client or partner is the primary resolution path. Fill these in only if the client contacts Ops directly.",
       "channel": "Payment Channel",
       "receivedAt": "Received At",
       "rawPayload": "Raw Webhook Payload"
@@ -89,10 +112,34 @@
     },
     "filters": {
       "type": "Task Type",
+      "allTypes": "All Types",
       "status": "Status",
       "time": "Time",
       "transactionId": "Transaction ID",
-      "transactionIdPlaceholder": "Search by transaction ID…"
+      "transactionIdPlaceholder": "Search by transaction ID…",
+      "assignedTo": "Assigned to",
+      "allAssignees": "Anyone",
+      "unassigned": "Unassigned",
+      "waitTime": "Wait Time",
+      "anyWait": "Any duration",
+      "over24h": "More than 24h",
+      "over48h": "More than 48h",
+      "senderNameAccount": "Sender Name or Account",
+      "senderPlaceholder": "Search sender…",
+      "senderBank": "Sender Bank",
+      "senderBankPlaceholder": "Bank name or SWIFT…",
+      "recipientNameAccount": "Recipient Name or Account",
+      "recipientPlaceholder": "Search recipient…",
+      "recipientBank": "Recipient Bank",
+      "recipientBankPlaceholder": "Recipient bank name…",
+      "client": "Client Name or Participant Code",
+      "clientPlaceholder": "Search client…",
+      "timeRange": "Time Range",
+      "expand": "More filters",
+      "collapse": "Fewer filters",
+      "reset": "Reset",
+      "results": "Results",
+      "clear": "Clear Filter"
     },
     "taskType": {
       "DEPOSIT_RECIPIENT_MATCHING": "Client Identification",
@@ -100,7 +147,7 @@
       "DEPOSIT_CLASSIFICATION": "Party Classification",
       "DEPOSIT_MISSING_FIELDS_FYI": "Missing Fields (FYI)",
       "DEPOSIT_SCREENING_REVIEW": "Compliance Screening Review",
-      "DEPOSIT_WEBHOOK_PARSE_FAILURE": "Webhook Parse Failure"
+      "DEPOSIT_WEBHOOK_PARSE_FAILURE": "Webhook Parse Failure (FYI)"
     },
     "taskTypeDesc": {
       "DEPOSIT_RECIPIENT_MATCHING": "Identify the correct recipient for an unmatched deposit",
@@ -114,13 +161,29 @@
       "PENDING": "Pending",
       "IN_PROGRESS": "In Progress",
       "COMPLETED": "Completed",
-      "ABNORMAL": "Abnormal"
+      "CANCELLED": "Cancelled"
     },
-    "escalation": {
-      "0": "Normal",
-      "1": "Flagged",
-      "2": "Mandatory Review",
-      "3": "Mandatory Escalation"
+    "priority": {
+      "highest": "Highest",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "accountStatus": {
+      "initial": "Initial",
+      "suspended": "Suspended",
+      "closed": "Closed"
+    },
+    "fyiBadge": "FYI · No action required",
+    "deposit": {
+      "transactionId": "Transaction ID",
+      "channel": "Payment Channel",
+      "amount": "Amount",
+      "senderName": "Sender Name",
+      "senderAccount": "Sender Account",
+      "senderBank": "Sender Bank",
+      "referenceCode": "Reference Code",
+      "valueDate": "Value Date"
     },
     "audit": {
       "created": "Task created",
@@ -128,27 +191,32 @@
       "unclaimed": "Released",
       "completed": "Marked complete",
       "note": "Note added",
-      "abnormal": "Marked abnormal",
+      "cancelled": "Cancelled",
       "recipientConfirmed": "Recipient confirmed",
       "retried": "Crediting retried",
       "classified": "Classification confirmed",
       "fieldsFilled": "Missing fields provided",
       "rejectedRefund": "Rejected — refund initiated",
       "screeningApproved": "Screening approved",
-      "closedNoAction": "Closed — no action needed"
+      "closedNoAction": "Closed — no action needed",
+      "orderNote": "Note added to deposit",
+      "orderRefunded": "Deposit marked refunded"
     },
     "drawer": {
       "details": "Details",
       "auditTrail": "Audit Trail",
-      "depositInfo": "Deposit Information",
+      "description": "Description",
+      "depositInfo": "Transaction Details",
+      "payloadInfo": "Webhook Payload",
+      "refundRecord": "Refund Record",
+      "refundMarkedBy": "Marked By",
       "noAuditTrail": "No audit trail entries.",
-      "completePlaceholder": "Resolution note (optional)…"
+      "notePlaceholder": "Add a note to this task…"
     },
     "emptyActive": "No pending tasks",
     "emptyActiveDesc": "All deposit tasks are resolved.",
-    "emptyCompleted": "No completed tasks",
-    "emptyCompletedDesc": "Completed tasks will appear here.",
-    "abnormalWarning": "This task encountered a system error and requires manual Ops or Admin intervention. Normal approval/rejection actions are unavailable."
+    "emptyCompleted": "No tasks in history",
+    "emptyCompletedDesc": "Completed and cancelled tasks will appear here."
   },
   "depositOrder": {
     "pageTitle": {
@@ -161,13 +229,18 @@
     },
     "actions": {
       "addNote": "Add Note",
-      "markRefunded": "Mark as Refunded"
+      "markRefunded": "Mark as Refunded",
+      "markRefundedShort": "Mark Refunded",
+      "task": "Task"
     },
     "toast": {
       "noteSaved": "Note added to deposit",
       "refundMarked": "Deposit marked as refunded"
     },
     "notePlaceholder": "Add a note to this deposit record…",
+    "manageColumns": "Manage Columns",
+    "unidentified": "Unidentified",
+    "ageingAlert": "{{count}} record(s) waiting over 48 hours — action required.",
     "refund": {
       "intro": "Use this only after manually processing the refund through the bank channel. This marks the deposit as Refunded and removes it from the unclaimed funds ledger.",
       "orderNumber": "Refund Order Number",
@@ -176,13 +249,56 @@
       "notesPlaceholder": "Optional notes about this refund…",
       "confirm": "Mark as Refunded"
     },
+    "export": {
+      "title": "Export Deposit Orders",
+      "generating": "Generating…",
+      "ready": "Export ready",
+      "failed": "Export failed",
+      "selectRange": "Please select a date range before exporting"
+    },
+    "detail": {
+      "title": "Order Detail",
+      "transaction": "Transaction",
+      "sender": "Sender",
+      "beneficiary": "Beneficiary",
+      "matching": "Matching & Compliance",
+      "settlement": "Settlement & Ops",
+      "refund": "Refund Record",
+      "updatedAt": "Last Updated"
+    },
     "filter": {
-      "searchPlaceholder": "Search transaction ID, sender, reference code…",
+      "orderType": "Order Type",
+      "allOrderTypes": "All Order Types",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "Search by transaction ID…",
       "channel": "Channel",
+      "allChannels": "All Channels",
       "status": "Status",
+      "allStatuses": "All Statuses",
       "currency": "Currency",
+      "allCurrencies": "All Currencies",
+      "partyType": "Party Type",
+      "allParties": "All Party Types",
+      "allReasons": "All Reasons",
+      "amount": "Amount",
+      "min": "Min",
+      "max": "Max",
       "dateRange": "Date Range",
-      "amountRange": "Amount Range"
+      "amountRange": "Amount Range",
+      "sender": "Sender Name or Account",
+      "senderPlaceholder": "Match sender name or account…",
+      "senderBank": "Sender Bank",
+      "senderBankPlaceholder": "Match bank name or SWIFT…",
+      "beneficiary": "Beneficiary Name or Account",
+      "beneficiaryPlaceholder": "Match beneficiary name or account…",
+      "beneficiaryBank": "Beneficiary Bank",
+      "beneficiaryBankPlaceholder": "Match beneficiary bank…",
+      "client": "Client Name or Participant Code",
+      "clientPlaceholder": "Search client…",
+      "searchPlaceholder": "Search transaction ID, sender, reference code…",
+      "expand": "More filters",
+      "collapse": "Fewer filters",
+      "reset": "Reset"
     },
     "col": {
       "transactionId": "Transaction ID",
@@ -199,6 +315,7 @@
       "beneficiaryName": "Beneficiary",
       "beneficiaryAccount": "Beneficiary Account",
       "beneficiaryCode": "Participant Code",
+      "beneficiaryBank": "Beneficiary Bank",
       "referenceCode": "Reference Code",
       "partyClassification": "Party",
       "status": "Status",
@@ -233,6 +350,9 @@
       "3rd_party": "3rd Party",
       "unclassified": "Unclassified"
     },
+    "orderType": {
+      "deposit": "Deposit"
+    },
     "screening": {
       "pass": "Pass",
       "pending_review": "Pending Review",
@@ -250,6 +370,147 @@
       "7": "Step 7 — Mandatory Fields",
       "8": "Step 8 — Screening",
       "9": "Step 9 — Value Date / Credit"
+    }
+  },
+  "channelAccount": {
+    "title": "Fiat Account Mapping Reference Table",
+    "subtitle": "Channel account numbers mapped to CAMP client accounts",
+    "searchPlaceholder": "Search channel account, MCA number, client, or reference…",
+    "empty": "No channel accounts",
+    "emptyDesc": "Add an entry or run a bulk upload to populate the mapping table.",
+    "actions": {
+      "addEntry": "Add Entry",
+      "bulkUpload": "Bulk Upload",
+      "viewDetail": "View Detail",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "col": {
+      "channel": "Payment Channel",
+      "accountType": "Account Type",
+      "channelAccountNumber": "Channel Account Number",
+      "referenceCode": "Reference Code",
+      "mcaAccountNumber": "MCA Account Number",
+      "currency": "Currency",
+      "clientName": "Client Name",
+      "participantCode": "Participant Code",
+      "memberId": "Member ID",
+      "participantStatus": "Participant Status",
+      "memberStatus": "Member Status",
+      "mappingStatus": "Mapping Status"
+    },
+    "accountType": {
+      "fiat": "Fiat",
+      "investment_fiat": "Investment Fiat"
+    },
+    "clientStatus": {
+      "active": "Active",
+      "initial": "Initial",
+      "suspended": "Suspended",
+      "closed": "Closed"
+    },
+    "mappingStatus": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "statusField": {
+      "participant": "Participant",
+      "member": "Member"
+    },
+    "exception": {
+      "rowTooltip": "Status exception — deposits to this account route to the Task Center.",
+      "tooltip": "Status exception — deposits to this account will be routed to Task Center. Current status: {{status}}.",
+      "bannerTitle": "Status exception — auto-crediting blocked",
+      "bannerAction": "Deposits matching this account route to the Task Center until the underlying account status is resolved in CAMP."
+    },
+    "detail": {
+      "title": "Channel Account Detail",
+      "mapping": "Mapping",
+      "client": "Client Identity",
+      "audit": "Audit Log",
+      "noAudit": "No audit history yet.",
+      "ruleActive": "Active — deposits matching this account will auto-credit.",
+      "ruleBlocked": "Blocked — deposits matching this account route to the Task Center."
+    },
+    "bank": {
+      "beneficiary": "Bank Information",
+      "beneficiaryName": "Beneficiary Name",
+      "beneficiaryAddress": "Beneficiary Address",
+      "beneficiaryCountry": "Beneficiary Country",
+      "bankDetails": "Bank Details",
+      "bankName": "Bank Name",
+      "accountNumber": "Account Number",
+      "swiftCode": "SWIFT Code",
+      "countryCode": "Country Code",
+      "bankAddress": "Bank Address",
+      "intermediary": "Intermediary Bank"
+    },
+    "form": {
+      "addTitle": "Add Channel Account",
+      "editTitle": "Edit Channel Account",
+      "create": "Create Entry",
+      "refCodeHint": "System-generated. Not editable.",
+      "identityHint": "Auto-populated from CAMP on MCA number entry in production.",
+      "identityReadOnly": "Client identity is sourced from CAMP and read-only after creation.",
+      "nonGldbReadOnly": "Read-only for non-GLDB channels."
+    },
+    "audit": {
+      "created": "Entry created",
+      "updated": "Entry updated",
+      "mappingStatus": "Mapping status changed",
+      "archived": "Entry archived (soft delete)",
+      "bulkCreated": "Created via bulk upload",
+      "bulkUpdated": "Updated via bulk upload"
+    },
+    "delete": {
+      "title": "Delete this mapping?",
+      "desc": "Channel account {{account}} will be archived (soft delete) and excluded from the rule engine. It is preserved for audit and can be restored by support."
+    },
+    "toast": {
+      "created": "Channel account added",
+      "updated": "Channel account updated",
+      "deleted": "Channel account archived",
+      "mappingActivated": "Mapping activated",
+      "mappingDeactivated": "Mapping deactivated"
+    },
+    "bulk": {
+      "title": "Bulk Upload — GLDB Mappings",
+      "scopeNote": "Bulk upload supports the GLDB channel only. Other channels must be added individually.",
+      "downloadTemplate": "Download Excel template",
+      "file": "Mapping file",
+      "dropHint": "Drop the GLDB mapping file here, or click to browse",
+      "accept": "Excel or CSV (.xlsx, .xls, .csv)",
+      "fileTypeError": "Please select an Excel or CSV file.",
+      "duplicateHandling": "Duplicate handling",
+      "modeIgnore": "Ignore (drop duplicates)",
+      "modeIgnoreDesc": "Skip rows that already exist. Existing data is kept unchanged.",
+      "modeOverwrite": "Overwrite",
+      "modeOverwriteDesc": "Update existing rows with the new values from the file.",
+      "upload": "Upload",
+      "done": "Upload complete",
+      "failed": "Upload failed",
+      "row": "Row",
+      "outcome": {
+        "added": "Added",
+        "updated": "Updated",
+        "ignored": "Ignored",
+        "rejected": "Rejected"
+      }
+    },
+    "filter": {
+      "expand": "More filters",
+      "collapse": "Fewer filters",
+      "reset": "Reset",
+      "allChannels": "All Channels",
+      "allTypes": "All Account Types",
+      "allStatuses": "All Statuses",
+      "client": "Client Name or Participant Code",
+      "clientPlaceholder": "Match client name or participant code…",
+      "accountNumberPlaceholder": "Match channel account number…",
+      "referenceCodePlaceholder": "Match reference code…",
+      "mcaPlaceholder": "Match MCA account number…",
+      "currencyPlaceholder": "e.g. SGD, USD…",
+      "memberIdPlaceholder": "Match member ID…"
     }
   }
 }

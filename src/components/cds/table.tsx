@@ -204,7 +204,7 @@ export function CdsTable<T>({
     <div className={`min-w-0 ${className}`}>
       <div className="overflow-hidden border-y border-(--border) max-w-full">
         <div className={layout === 'fixed' ? '' : 'overflow-x-auto scrollbar-hide'}>
-          <table className={`border-separate border-spacing-0 type-body-sm [&_tbody>tr:last-child>td]:border-b-0 ${layout === 'fixed' ? 'table-fixed w-full' : 'w-max min-w-full'}`}>
+          <table className={`border-separate border-spacing-0 type-body [&_tbody>tr:last-child>td]:border-b-0 ${layout === 'fixed' ? 'table-fixed w-full' : 'w-max min-w-full'}`}>
             <thead>
               <tr>
                 {selectable && (

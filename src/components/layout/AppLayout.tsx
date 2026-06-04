@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
-import Topbar from './Topbar'
-import Footer from './Footer'
 
 const MOBILE_BP = 1024
 
@@ -31,15 +29,12 @@ export default function AppLayout() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Topbar
-        isMobile={isMobile}
-        onMobileToggle={() => setMobileOpen(v => !v)}
-      />
-      <div className="flex flex-1 pt-(--header-h)">
+      <div className="flex flex-1">
         <Sidebar
           isMobile={isMobile}
           mobileOpen={mobileOpen}
           onClose={() => setMobileOpen(false)}
+          onMobileToggle={() => setMobileOpen(v => !v)}
         />
         {isMobile && mobileOpen && (
           <div
@@ -54,7 +49,6 @@ export default function AppLayout() {
           <div className="flex flex-1 flex-col min-w-0 px-4 pt-3 pb-8 md:px-10">
             <Outlet />
           </div>
-          <Footer />
         </main>
       </div>
     </div>

@@ -1,24 +1,11 @@
 import { useMutation } from '@tanstack/react-query'
-import { apiFetch } from '../_client'
+import { exportData } from '../store'
+import type { ExportParams, ExportResult } from '../store'
 
-export interface ExportParams {
-  type:    string
-  filters: Record<string, string>
-}
-
-export interface ExportResult {
-  job_id:       string
-  download_url: string
-  filename:     string
-}
+export type { ExportParams, ExportResult }
 
 export function useExport() {
   return useMutation({
-    mutationFn: (params: ExportParams) =>
-      apiFetch<ExportResult>('/export', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params),
-      }),
+    mutationFn: exportData,
   })
 }

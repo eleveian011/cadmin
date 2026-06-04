@@ -1,9 +1,17 @@
-import type { DepositOrder } from '../../types/deposit-order'
+import type { DepositOrder } from '../types/deposit-order'
 
 function daysAgo(n: number, offsetHours = 0): string {
   const d = new Date()
   d.setDate(d.getDate() - n)
   d.setHours(d.getHours() - offsetHours)
+  return d.toISOString()
+}
+
+/** Timestamp `n` hours ago (+ optional minutes). Used for abnormal orders so their
+ *  ageing badge stays in the hours-based urgency range (>24h amber, >48h red). */
+function hoursAgo(n: number, minutes = 0): string {
+  const d = new Date()
+  d.setMinutes(d.getMinutes() - n * 60 - minutes)
   return d.toISOString()
 }
 
@@ -17,7 +25,7 @@ function minor(amount: number): number {
   return Math.round(amount * 100)
 }
 
-export const depositOrders: DepositOrder[] = [
+const depositOrdersSeed: Omit<DepositOrder, 'order_type'>[] = [
   // ── Successful ──────────────────────────────────────────────────────────
   {
     id: 'dep_001',
@@ -36,6 +44,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: 'Alibaba SG Master',
     beneficiary_account: 'MCA-ALI-001',
     beneficiary_code: 'PART-ALI-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
     reference_code: 'REF-ALI-001',
     matched_rule_step: 3,
     value_date: toDate(3),
@@ -63,6 +72,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: 'Taobao Sub',
     beneficiary_account: 'MCA-TAO-001',
     beneficiary_code: 'PART-TAO-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
     reference_code: 'REF-TAO-001',
     matched_rule_step: 2,
     value_date: toDate(5),
@@ -90,6 +100,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: 'Tmall Tech Sub',
     beneficiary_account: 'MCA-TMT-001',
     beneficiary_code: 'PART-TMT-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
     reference_code: 'REF-TMT-001',
     matched_rule_step: 3,
     value_date: toDate(2),
@@ -117,6 +128,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: 'Fliggy Travel Sub',
     beneficiary_account: 'MCA-FLG-001',
     beneficiary_code: 'PART-FLG-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
     reference_code: 'REF-FLG-001',
     matched_rule_step: 2,
     value_date: toDate(1),
@@ -147,6 +159,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: null,
     beneficiary_account: null,
     beneficiary_code: null,
+    beneficiary_bank_name: null,
     reference_code: 'REF-UNKN-999',
     matched_rule_step: 5,
     value_date: toDate(0),
@@ -154,8 +167,8 @@ export const depositOrders: DepositOrder[] = [
     screening_result: null,
     ops_handler: null,
     remarks: null,
-    created_at: daysAgo(3, 4),
-    updated_at: daysAgo(3, 4),
+    created_at: hoursAgo(3, 12),
+    updated_at: hoursAgo(3, 12),
   },
   // ── Anomalous — Unidentified (12d old — amber badge) ─────────────────────
   {
@@ -176,6 +189,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: null,
     beneficiary_account: null,
     beneficiary_code: null,
+    beneficiary_bank_name: null,
     reference_code: null,
     matched_rule_step: 5,
     value_date: toDate(12),
@@ -183,8 +197,8 @@ export const depositOrders: DepositOrder[] = [
     screening_result: null,
     ops_handler: null,
     remarks: 'No sender details in webhook payload',
-    created_at: daysAgo(12, 2),
-    updated_at: daysAgo(12, 2),
+    created_at: hoursAgo(30, 20),
+    updated_at: hoursAgo(26, 10),
   },
 
   // ── Anomalous — Account Status Exception (35d old — red badge) ───────────
@@ -206,6 +220,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: 'Xianyu Vintage Sub',
     beneficiary_account: 'MCA-XYV-001',
     beneficiary_code: 'PART-XYV-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
     reference_code: 'REF-XYV-001',
     matched_rule_step: 4,
     value_date: toDate(35),
@@ -213,8 +228,8 @@ export const depositOrders: DepositOrder[] = [
     screening_result: null,
     ops_handler: null,
     remarks: 'Account status: Suspended',
-    created_at: daysAgo(35, 5),
-    updated_at: daysAgo(35, 5),
+    created_at: hoursAgo(26, 40),
+    updated_at: hoursAgo(20, 0),
   },
 
   // ── Anomalous — Ambiguous Party Classification (95d old — purple badge) ───
@@ -236,6 +251,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: 'AE Outlet Sub',
     beneficiary_account: 'MCA-AEO-001',
     beneficiary_code: 'PART-AEO-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
     reference_code: 'REF-AEO-001',
     matched_rule_step: 6,
     value_date: toDate(95),
@@ -243,8 +259,39 @@ export const depositOrders: DepositOrder[] = [
     screening_result: null,
     ops_handler: null,
     remarks: 'Name match score 0.72 — ambiguous range',
-    created_at: daysAgo(95, 6),
-    updated_at: daysAgo(95, 6),
+    created_at: hoursAgo(40, 0),
+    updated_at: hoursAgo(20, 0),
+  },
+
+  // ── Anomalous — Ambiguous Party Classification (active, ~10h) ────────────
+  {
+    id: 'dep_anom_009',
+    transaction_id: 'DP20260604900009',
+    payment_channel: 'SGB',
+    amount_minor: minor(18600),
+    currency: 'USD',
+    status: 'processing.manual_review',
+    anomalous_reason: 'classification',
+    party_classification: 'unclassified',
+    task_center_id: 'TASK-DEP-0097',
+    sender_name: 'Lim Wei Construction',
+    sender_account: 'SGB0044556677',
+    sender_bank_swift: 'SGBKSGSG',
+    sender_bank_name: 'Singapore Gulf Bank',
+    sender_country: 'SG',
+    beneficiary_name: 'Lim Wei Holdings',
+    beneficiary_account: 'MCA-LWH-001',
+    beneficiary_code: 'PART-LWH-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
+    reference_code: 'REF-LWH-001',
+    matched_rule_step: 6,
+    value_date: toDate(0),
+    credit_date: null,
+    screening_result: null,
+    ops_handler: null,
+    remarks: 'Name match score 0.68 — ambiguous range, awaiting Ops classification',
+    created_at: hoursAgo(10, 25),
+    updated_at: hoursAgo(10, 25),
   },
 
   // ── Anomalous — Missing Fields (2d old — green badge) ────────────────────
@@ -266,6 +313,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: 'Fliggy Travel Sub',
     beneficiary_account: 'MCA-FLG-001',
     beneficiary_code: 'PART-FLG-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
     reference_code: 'REF-FLG-001',
     matched_rule_step: 7,
     value_date: toDate(2),
@@ -273,8 +321,8 @@ export const depositOrders: DepositOrder[] = [
     screening_result: null,
     ops_handler: null,
     remarks: 'Missing: SWIFT BIC, Sender Bank Name',
-    created_at: daysAgo(2, 1),
-    updated_at: daysAgo(2, 1),
+    created_at: hoursAgo(5, 10),
+    updated_at: hoursAgo(5, 10),
   },
 
   // ── Anomalous — Screening Pending Review (1d old — green badge) ──────────
@@ -296,6 +344,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: 'Alibaba SG Master',
     beneficiary_account: 'MCA-ALI-001',
     beneficiary_code: 'PART-ALI-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
     reference_code: 'REF-ALI-001',
     matched_rule_step: 8,
     value_date: toDate(1),
@@ -303,8 +352,70 @@ export const depositOrders: DepositOrder[] = [
     screening_result: 'pending_review',
     ops_handler: 'Alex Chen',
     remarks: 'VisionX flagged for manual compliance review',
-    created_at: daysAgo(1, 8),
-    updated_at: daysAgo(1, 3),
+    created_at: hoursAgo(8, 30),
+    updated_at: hoursAgo(7, 0),
+  },
+
+  // ── Anomalous — Prolonged Unidentified (35d — past ageing threshold) ─────
+  {
+    id: 'dep_anom_007',
+    transaction_id: 'DP20260430900066',
+    payment_channel: 'GLDB',
+    amount_minor: minor(48500),
+    currency: 'SGD',
+    status: 'processing.manual_review',
+    anomalous_reason: 'unidentified',
+    party_classification: 'unclassified',
+    task_center_id: 'TASK-DEP-0066',
+    sender_name: 'Orient Pacific Holdings',
+    sender_account: '88007766554',
+    sender_bank_swift: 'GLDBSGSG',
+    sender_bank_name: 'Green Link Digital Bank',
+    sender_country: 'SG',
+    beneficiary_name: null,
+    beneficiary_account: null,
+    beneficiary_code: null,
+    beneficiary_bank_name: null,
+    reference_code: 'REF-ORNT-12',
+    matched_rule_step: 5,
+    value_date: toDate(35),
+    credit_date: null,
+    screening_result: null,
+    ops_handler: null,
+    remarks: null,
+    created_at: hoursAgo(52, 30),
+    updated_at: hoursAgo(52, 30),
+  },
+
+  // ── Anomalous — Prolonged Unidentified (62d — no candidates, refund-eligible) ─
+  {
+    id: 'dep_anom_008',
+    transaction_id: 'DP20260301900021',
+    payment_channel: 'SGB',
+    amount_minor: minor(123000),
+    currency: 'USD',
+    status: 'processing.manual_review',
+    anomalous_reason: 'unidentified',
+    party_classification: 'unclassified',
+    task_center_id: 'TASK-DEP-0021',
+    sender_name: 'Unknown Remitter',
+    sender_account: null,
+    sender_bank_swift: null,
+    sender_bank_name: null,
+    sender_country: null,
+    beneficiary_name: null,
+    beneficiary_account: null,
+    beneficiary_code: null,
+    beneficiary_bank_name: null,
+    reference_code: null,
+    matched_rule_step: 5,
+    value_date: toDate(62),
+    credit_date: null,
+    screening_result: null,
+    ops_handler: 'Alex Chen',
+    remarks: 'Contacted SGB for additional sender details — awaiting response',
+    created_at: hoursAgo(70, 15),
+    updated_at: hoursAgo(6, 0),
   },
 
   // ── Deferred ─────────────────────────────────────────────────────────────
@@ -325,6 +436,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: 'Tmall Beauty Sub',
     beneficiary_account: 'MCA-TMB-001',
     beneficiary_code: 'PART-TMB-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
     reference_code: 'REF-TMB-001',
     matched_rule_step: 9,
     value_date: toDate(-1),
@@ -354,6 +466,7 @@ export const depositOrders: DepositOrder[] = [
     beneficiary_name: 'AliExpress Sub',
     beneficiary_account: 'MCA-AEX-001',
     beneficiary_code: 'PART-AEX-001',
+    beneficiary_bank_name: 'MetaComp Pte Ltd',
     reference_code: 'REF-AEX-001',
     matched_rule_step: 8,
     value_date: toDate(4),
@@ -365,3 +478,6 @@ export const depositOrders: DepositOrder[] = [
     updated_at: daysAgo(4),
   },
 ]
+
+/** All seed orders are deposits today; order_type is injected here. */
+export const depositOrders: DepositOrder[] = depositOrdersSeed.map(d => ({ order_type: 'deposit', ...d }))

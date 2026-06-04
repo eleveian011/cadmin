@@ -5,5 +5,11 @@ export type {
 } from './deposit-order'
 export type {
   DepositTask, DepositTaskType, TaskStatus, TaskHistoryEntry, DepositTaskListResponse,
-  MatchCandidate, MissingField, AccountStatus,
+  MatchCandidate, MatchStrategy, MatchStrategyHit, MatchPriority,
+  MissingField, AccountStatus, ClientSearchResult,
 } from './task'
+export type {
+  ChannelAccount, ChannelAccountChannel, AccountType, MappingStatus, ClientStatus,
+  BeneficiaryInfo, BankDetails, IntermediaryBank, ChannelAccountHistoryEntry,
+  BulkUploadRow, BulkRowOutcome, BulkRowResult, DuplicateMode, BulkUploadResult,
+} from './channel-account'

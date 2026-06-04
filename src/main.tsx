@@ -16,24 +16,15 @@ const queryClient = new QueryClient({
   },
 })
 
-async function prepare() {
-  if (import.meta.env.DEV) {
-    const { worker } = await import('./mocks/browser')
-    return worker.start({ onUnhandledRequest: 'bypass' })
-  }
-}
-
 const rootEl = document.getElementById('root')
 if (!rootEl) throw new Error('Root element not found')
 
-prepare().then(() => {
-  createRoot(rootEl).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <CdsToastProvider>
-          <App />
-        </CdsToastProvider>
-      </QueryClientProvider>
-    </StrictMode>,
-  )
-})
+createRoot(rootEl).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <CdsToastProvider>
+        <App />
+      </CdsToastProvider>
+    </QueryClientProvider>
+  </StrictMode>,
+)
