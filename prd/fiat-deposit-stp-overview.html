@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>法币入金自动化 STP — 方案概览</title>
+  <style>
+    :root {
+      --blue:   #1a56db;
+      --green:  #057a55;
+      --orange: #e3a008;
+      --red:    #e02424;
+      --bg:     #f8fafc;
+      --card:   #ffffff;
+      --border: #e2e8f0;
+      --text:   #1e293b;
+      --muted:  #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1a56db 60%, #0ea5e9 100%);
+      color: #fff;
+      padding: 60px 40px 50px;
+      text-align: center;
+    }
+    .hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; }
+    .hero .subtitle { font-size: 1.05rem; opacity: 0.85; max-width: 620px; margin: 0 auto 24px; }
+    .hero .meta { font-size: 0.82rem; opacity: 0.7; }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.2);
+      margin: 0 4px;
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+    .section { padding: 48px 0 40px; }
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+    .section-desc { font-size: 0.9rem; color: var(--muted); margin-bottom: 28px; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+    /* ── Problem / Opportunity ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .panel h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .panel ul { padding-left: 18px; font-size: 0.88rem; }
+    .panel ul li { margin-bottom: 8px; color: var(--text); }
+    .panel.problem h3 { color: var(--red); }
+    .panel.solution h3 { color: var(--green); }
+
+    /* ── Metrics ── */
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 780px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 18px;
+      text-align: center;
+    }
+    .metric-card .value {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: var(--blue);
+      line-height: 1.1;
+    }
+    .metric-card .label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .metric-card .from {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 4px;
+      text-decoration: line-through;
+    }
+
+    /* ── Flow ── */
+    .flow-wrapper { display: flex; flex-direction: column; gap: 16px; }
+    .flow-trigger-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 640px) { .flow-trigger-row { grid-template-columns: 1fr; } }
+    .flow-trigger {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.84rem;
+    }
+    .flow-trigger .icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+    .flow-trigger .name { font-weight: 700; margin-bottom: 3px; }
+    .flow-trigger .desc { color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
+    .flow-trigger.highlight { border-color: #bfdbfe; background: #eff6ff; }
+    .flow-merge {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 4px 0;
+    }
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+    }
+    @media (max-width: 780px) { .flow-steps { grid-template-columns: 1fr; } }
+    .flow-step {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 20px 16px;
+      position: relative;
+      text-align: center;
+    }
+    .flow-step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.1rem;
+      color: var(--muted);
+      z-index: 1;
+      background: var(--bg);
+    }
+    @media (max-width: 780px) {
+      .flow-step:not(:last-child)::after { display: none; }
+    }
+    .flow-step:first-child { border-radius: 12px 0 0 12px; }
+    .flow-step:last-child  { border-radius: 0 12px 12px 0; }
+    .flow-step .icon { font-size: 1.5rem; margin-bottom: 8px; }
+    .flow-step .name { font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; }
+    .flow-step .desc { font-size: 0.74rem; color: var(--muted); }
+
+    /* ── Rule Engine ── */
+    .rules { display: flex; flex-direction: column; gap: 10px; }
+    .rule-row {
+      display: grid;
+      grid-template-columns: 40px 200px 1fr;
+      gap: 12px;
+      align-items: start;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 0.85rem;
+    }
+    @media (max-width: 640px) { .rule-row { grid-template-columns: 1fr; } }
+    .rule-num {
+      font-weight: 800;
+      color: var(--blue);
+      font-size: 1rem;
+    }
+    .rule-name { font-weight: 600; }
+    .rule-desc { color: var(--muted); line-height: 1.5; }
+    .auto-tag {
+      display: inline-block;
+      background: #dcfce7;
+      color: var(--green);
+      font-size: 0.72rem;
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-left: 6px;
+    }
+    .ops-tag {
+      display: inline-block;
+      background: #fef9c3;
+      color: #92400e;
+      font-size: 0.72rem;
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-left: 6px;
+    }
+
+    /* ── Key Changes ── */
+    .changes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @media (max-width: 720px) { .changes { grid-template-columns: 1fr; } }
+    .change-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .change-card h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .change-card p { font-size: 0.83rem; color: var(--muted); line-height: 1.55; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+    /* ── Stakeholders ── */
+    .stakeholders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 680px) { .stakeholders { grid-template-columns: 1fr; } }
+    .stake-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      font-size: 0.83rem;
+    }
+    .stake-card h4 { font-size: 0.88rem; font-weight: 700; margin-bottom: 6px; }
+    .stake-card p { color: var(--muted); line-height: 1.5; }
+
+    /* ── Out of Scope ── */
+    .oos-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .oos-chip {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.81rem;
+      color: var(--muted);
+    }
+
+    /* ── Footer ── */
+    .footer {
+      background: #1e293b;
+      color: #94a3b8;
+      text-align: center;
+      padding: 28px;
+      font-size: 0.8rem;
+    }
+    .footer strong { color: #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════════════ -->
+<div class="hero">
+  <h1>法币入金自动化 STP</h1>
+  <p class="subtitle">将 100% 人工处理的法币入金，通过直通式处理（Straight-Through Processing）实现 80%+ 的全自动入账</p>
+  <div class="meta">
+    <span class="badge">MetaComp Pte. Ltd.</span>
+    <span class="badge">MAS MPI + DPT</span>
+    <span class="badge">版本 v1.12</span>
+    <span class="badge">2026-06-04</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════════════════════════════════
+     PROBLEM & SOLUTION
+═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">背景与痛点</div>
+  <div class="section-desc">当前入金完全依赖人工，效率低下、易出错且无法规模化。</div>
+  <div class="two-col">
+    <div class="panel problem">
+      <h3>⚠️ 当前问题</h3>
+      <ul>
+        <li>资金到账后，Lark 收到 webhook 通知，但后续全靠人工操作</li>
+        <li>Ops 需手动匹配客户账户、补全银行信息、点击入账——每笔耗时数小时</li>
+        <li>COBO 预审查表单收集的是客户自填数据，而非实际到账交易信息，存在合规盲点</li>
+        <li>实际到账信息与预填表单不一致时，风控筛查无法检测差异</li>
+        <li>无法规模化：随业务增长，人力瓶颈将成为关键风险</li>
+      </ul>
+    </div>
+    <div class="panel solution">
+      <h3>✅ STP 方案</h3>
+      <ul>
+        <li>银行 webhook → 自动客户识别（VA 匹配 / 参考码匹配）</li>
+        <li>自动判断资金性质（本人 / 第三方），基于模糊名称匹配</li>
+        <li>自动触发 VisionX 合规风控筛查，使用真实到账交易数据</li>
+        <li>筛查通过后，按 Value Date 自动入账，无需人工干预</li>
+        <li>无法识别的资金进入待认领账本，通过 Task Center 推送给 Ops 处理</li>
+        <li>彻底取消 COBO 预审表单（已获 Compliance 确认）</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════
+     METRICS
+═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">目标成效</div>
+  <div class="section-desc">核心业务指标改善目标</div>
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="value">&gt;80%</div>
+      <div class="label">自动入账比例</div>
+      <div class="from">当前：0%</div>
+    </div>
+    <div class="metric-card">
+      <div class="value">&lt;1 分钟</div>
+      <div class="label">自动入账到账时间</div>
+      <div class="from">当前：4–24 小时</div>
+    </div>
+    <div class="metric-card">
+      <div class="value">0%</div>
+      <div class="label">需 COBO 表单的比例</div>
+      <div class="from">当前：100%</div>
+    </div>
+    <div class="metric-card">
+      <div class="value">4×</div>
+      <div class="label">Ops 处理效能提升</div>
+      <div class="from">当前：逐笔人工处理</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════
+     FLOW
+═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">整体处理流程</div>
+  <div class="section-desc">从资金到账到完成入账的端到端自动化路径。交易信息来源于渠道 API 的反查结果，而非 webhook payload 本身，确保数据真实可信。</div>
+  <div class="flow-wrapper">
+
+    <!-- Trigger layer -->
+    <div class="flow-trigger-row">
+      <div class="flow-trigger highlight">
+        <div class="icon">🔔</div>
+        <div>
+          <div class="name">Webhook 触发</div>
+          <div class="desc">GLDB / SGB / TransferMate / Tazapay 到账事件推送。Webhook 仅作通知触发，<strong>不作为交易信息来源</strong>。收到后系统立即向渠道 API 反查完整交易详情。</div>
+        </div>
+      </div>
+      <div class="flow-trigger">
+        <div class="icon">⏱️</div>
+        <div>
+          <div class="name">定时任务兜底</div>
+          <div class="desc">定期主动拉取渠道交易记录，补漏 webhook 遗漏或篡改的情况。对待处理中的交易持续轮询状态，直至达到终态。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-merge">↓ 两条路径均需反查渠道 API 获取完整交易详情，汇入同一处理流程 ↓</div>
+
+    <!-- Main pipeline -->
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="icon">📋</div>
+        <div class="name">交易详情反查</div>
+        <div class="desc">向渠道 API 获取付款人姓名、账号、SWIFT BIC、Value Date 等完整字段</div>
+      </div>
+      <div class="flow-step">
+        <div class="icon">🔍</div>
+        <div class="name">客户识别</div>
+        <div class="desc">通过 VA 或参考码匹配到对应客户账户</div>
+      </div>
+      <div class="flow-step">
+        <div class="icon">🏷️</div>
+        <div class="name">性质分类</div>
+        <div class="desc">模糊名称匹配判断本人 / 第三方付款</div>
+      </div>
+      <div class="flow-step">
+        <div class="icon">🛡️</div>
+        <div class="name">合规筛查</div>
+        <div class="desc">VisionX 使用真实到账数据触发 TxM</div>
+      </div>
+      <div class="flow-step">
+        <div class="icon">✅</div>
+        <div class="name">自动入账</div>
+        <div class="desc">按 Value Date 入账，通知客户</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════
+     RULE ENGINE
+═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">客户识别规则引擎</div>
+  <div class="section-desc">按优先级顺序执行的 10 步确定性规则链。每步要么识别成功继续，要么路由到异常处理，确保全流程可追溯。</div>
+  <div class="rules">
+    <div class="rule-row">
+      <div class="rule-num">0</div>
+      <div class="rule-name">Webhook 校验 / 事件过滤<span class="auto-tag">自动</span></div>
+      <div class="rule-desc">验证 payload 格式；过滤非入金事件类型；解析失败发送技术告警。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">1</div>
+      <div class="rule-name">账户排除名单<span class="auto-tag">自动</span></div>
+      <div class="rule-desc">如收款账户在排除名单（如 ALF 账户），路由到对应团队，不进入 STP。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">2</div>
+      <div class="rule-name">Named VA / 账户映射匹配<span class="auto-tag">自动</span></div>
+      <div class="rule-desc">查询法币账户映射表，通过虚拟账号或实际账号直接定位客户。多父节点 VA 需结合参考码消歧。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">3</div>
+      <div class="rule-name">参考码匹配（Omnibus 账户）<span class="auto-tag">自动</span></div>
+      <div class="rule-desc">在指定字段中精确匹配参考码。部分匹配（子字符串）转人工核实，避免误识别。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">4</div>
+      <div class="rule-name">账户状态检查<span class="auto-tag">自动</span></div>
+      <div class="rule-desc">仅 Active 账户可继续自动流程。Suspended / Closed / Initial 状态阻断并创建 Task Center 任务。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">5</div>
+      <div class="rule-name">未识别资金兜底<span class="ops-tag">Ops 介入</span></div>
+      <div class="rule-desc">前 3 步均未匹配时，执行智能候选人搜索（相似参考码 / VA 父节点 / 姓名模糊匹配 / 已保存付款方）并推送给 Ops 审核，资金暂入待认领账本。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">6</div>
+      <div class="rule-name">1st / 3rd Party 分类<span class="auto-tag">自动</span></div>
+      <div class="rule-desc">付款人姓名与客户注册名模糊匹配：≥0.85 为本人，＜0.5 为第三方，模糊区间转 Ops 确认。同时满足 PSN04 监管报送要求。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">7</div>
+      <div class="rule-name">必填字段校验<span class="auto-tag">自动</span></div>
+      <div class="rule-desc">校验合规必填项是否齐全（第三方需额外提供付款用途）。缺失时向客户 / 合作方发起补充信息请求。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">8</div>
+      <div class="rule-name">VisionX 合规筛查<span class="auto-tag">自动</span></div>
+      <div class="rule-desc">全部入金触发 TxM 风控筛查（无论本人/第三方）。Pass → 自动入账；Pending Review → 合规团队审核；Rejected → 退款流程。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">9</div>
+      <div class="rule-name">Value Date 入账<span class="auto-tag">自动</span></div>
+      <div class="rule-desc">今日或过去日期立即入账；未来日期在 Value Date 当天 00:00 自动执行；无日期也立即入账。</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════
+     KEY CHANGES
+═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">三大核心变化</div>
+  <div class="section-desc">相比现有流程的关键差异</div>
+  <div class="changes">
+    <div class="change-card">
+      <h4><span class="dot" style="background:#e02424"></span> 取消 COBO 预审表单</h4>
+      <p>COBO 表单收集的是客户自填声明，而非真实到账数据。筛查结果缺乏可信度，且资金到账时系统复用旧表单数据，无法检测实际付款方差异。<br><br><strong>变化</strong>：Compliance 已确认取消。VisionX 筛查改用银行 API 返回的真实交易数据，100% 覆盖。</p>
+    </div>
+    <div class="change-card">
+      <h4><span class="dot" style="background:#1a56db"></span> 法币账户映射参考表</h4>
+      <p>新建统一的账户映射表，覆盖 GLDB、SGB、TransferMate、Tazapay 等所有渠道。客户开设 VA 或生成参考码时自动写入，无需 Ops 手动维护大部分记录。<br><br><strong>价值</strong>：提供账号→客户的确定性映射，是 VA 匹配和账户状态检查的数据基础。</p>
+    </div>
+    <div class="change-card">
+      <h4><span class="dot" style="background:#057a55"></span> Ops 工作流重构</h4>
+      <p>原有手工处理路径被 Task Center 替代。Ops 只需处理规则引擎无法自动解决的少数异常：未识别资金、账户状态异常、模糊分类确认。<br><br><strong>变化</strong>：每条任务预填所有可用信息，候选客户列表自动生成，Ops 点选确认即可，无需从头查找。</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════
+     NAME MATCHING
+═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">姓名模糊匹配算法</div>
+  <div class="section-desc">NameMatchService 是独立模块，返回归一化匹配分 [0.0, 1.0]，供规则引擎决策分类阈值。</div>
+  <div class="two-col">
+    <div class="panel">
+      <h3 style="color:var(--blue)">🔤 处理能力</h3>
+      <ul>
+        <li>大小写、多余空格、标点符号归一化</li>
+        <li>特殊字符 ASCII 转写：José → Jose，Müller → Mueller，François → Francois</li>
+        <li>中文姓名拼音转换：「张三」↔ "Zhang San" / "Zhangsan"</li>
+        <li>企业后缀分离："Pte Ltd"、"Inc"、"GmbH" 等不影响核心名称匹配</li>
+        <li>Token 顺序无关匹配："Lim John" 与 "John Lim" 得分相同</li>
+        <li>拼音结构校验：防止"王小华"与"Hua Xiao Wang"误判为同一人</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3 style="color:var(--blue)">📊 分类阈值（法币入金场景）</h3>
+      <ul>
+        <li><strong>S ≥ 0.85</strong> → 本人（1st Party）：必填字段较少</li>
+        <li><strong>0.5 ≤ S &lt; 0.85</strong> → 模糊区间：路由到 Task Center，Ops 人工确认</li>
+        <li><strong>S &lt; 0.5</strong> → 第三方（3rd Party）：需额外提供付款用途</li>
+      </ul>
+      <br>
+      <p style="font-size:0.83rem;color:var(--muted)">阈值存于数据库配置，无需重新部署即可调整。算法完全确定性，每次匹配结果可追溯至具体 token 对比步骤，满足监管审计要求。</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════
+     STAKEHOLDERS
+═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">各方影响</div>
+  <div class="section-desc">对主要干系人的具体改变</div>
+  <div class="stakeholders">
+    <div class="stake-card">
+      <h4>🏢 Operations 团队</h4>
+      <p>从逐笔手工处理变为异常处理。Task Center 预填所有可用信息，候选客户自动排序，确认操作一键完成。预计效率提升 4 倍。</p>
+    </div>
+    <div class="stake-card">
+      <h4>⚖️ Compliance / TxM</h4>
+      <p>筛查改用真实到账数据，消除旧版 COBO 表单与实际交易不一致的合规盲点。筛查自动触发，无需手动发起。VisionX 整合由 VisionX 团队负责。</p>
+    </div>
+    <div class="stake-card">
+      <h4>💰 Finance / Treasury</h4>
+      <p>Value Date 逻辑与银行结单保持一致，保证资金安全储存时机准确。EOD 对账纳入待认领账本余额，确保账本平衡。</p>
+    </div>
+    <div class="stake-card">
+      <h4>👤 客户 / End User</h4>
+      <p>自动入账从 4–24 小时缩短至 1 分钟以内。资金到账后收到邮件/Webhook 通知。缺少字段时通过 Task Center 补充，无需联系客服。</p>
+    </div>
+    <div class="stake-card">
+      <h4>🔌 合作方 / Partner API</h4>
+      <p>新增 Missing Fields Response 接口，可通过 API 实时获知需补充哪些字段并回传。支持预存已知付款人信息，提升自动识别率。</p>
+    </div>
+    <div class="stake-card">
+      <h4>🔧 Engineering</h4>
+      <p>规则引擎与渠道配置分离，新增渠道无需修改核心逻辑。每条规则独立可测试。NameMatchService 为纯函数模块，可复用于提现、转账等场景。</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════
+     OUT OF SCOPE
+═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">本期范围外</div>
+  <div class="section-desc">以下内容不在本 PRD 覆盖范围内</div>
+  <div class="oos-list">
+    <div class="oos-chip">出金自动化（独立 BRD）</div>
+    <div class="oos-chip">行内资金划转（PAYIN-INTRA / PAYOUT）</div>
+    <div class="oos-chip">ALF 账户自动入账（待 Wealth Ops 决策）</div>
+    <div class="oos-chip">退款执行流程（独立 PRD）</div>
+    <div class="oos-chip">借记卡入金通道（Backbone 团队）</div>
+    <div class="oos-chip">对账流程（现有机制无变化）</div>
+    <div class="oos-chip">VisionX RFI 响应流程</div>
+    <div class="oos-chip">渠道 API 故障处理（Backbone 层负责）</div>
+    <div class="oos-chip">GLDB SFTP 自动同步（下一期规划）</div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════
+     DEPENDENCIES
+═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">关键依赖与待确认项</div>
+  <div class="section-desc">推进前需要各方确认的事项</div>
+  <div class="rules" style="gap:8px">
+    <div class="rule-row" style="grid-template-columns: 140px 1fr 100px">
+      <div class="rule-name">ALF 排除名单</div>
+      <div class="rule-desc">需 Ops / Finance 提供完整账号列表</div>
+      <div><span class="ops-tag">Open</span></div>
+    </div>
+    <div class="rule-row" style="grid-template-columns: 140px 1fr 100px">
+      <div class="rule-name">各渠道字段映射</div>
+      <div class="rule-desc">各支付渠道的参考码字段路径，由 Backbone 团队在接入时配置</div>
+      <div><span class="ops-tag">Open</span></div>
+    </div>
+    <div class="rule-row" style="grid-template-columns: 140px 1fr 100px">
+      <div class="rule-name">Lexis Nexis 回调</div>
+      <div class="rule-desc">VisionX → CAMP 筛查结果回调集成方式，待 Engineering 确认</div>
+      <div><span class="ops-tag">Open</span></div>
+    </div>
+    <div class="rule-row" style="grid-template-columns: 140px 1fr 100px">
+      <div class="rule-name">COBO 表单取消</div>
+      <div class="rule-desc">Compliance 已确认取消，TxM 改用真实到账数据</div>
+      <div><span class="auto-tag">✅ Done</span></div>
+    </div>
+    <div class="rule-row" style="grid-template-columns: 140px 1fr 100px">
+      <div class="rule-name">VisionX 超时策略</div>
+      <div class="rule-desc">超时默认 Pass 入账的策略需 Compliance 最终签字确认（OQ #14）</div>
+      <div><span class="ops-tag">Open</span></div>
+    </div>
+    <div class="rule-row" style="grid-template-columns: 140px 1fr 100px">
+      <div class="rule-name">CAMP Engineering 排期</div>
+      <div class="rule-desc">CAMP Admin 新页面及 Task Center 集成的开发资源</div>
+      <div><span class="ops-tag">TBD</span></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ═══════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════ -->
+<div class="footer">
+  <strong>MetaComp Pte. Ltd. — 内部文件</strong><br>
+  法币入金自动化 STP PRD v1.12 &nbsp;·&nbsp; 作者：Rebecca &nbsp;·&nbsp; 2026-06-04 &nbsp;·&nbsp; DRAFT
+</div>
+
+</body>
+</html>

@@ -1,0 +1,255 @@
+{
+  "common": {
+    "search": "Search",
+    "reset": "Reset",
+    "export": "Export",
+    "viewInTaskCenter": "View in Task Center",
+    "unknown": "Unknown",
+    "na": "—"
+  },
+  "nav": {
+    "taskCenter": "Task Center",
+    "orders": "Order Management",
+    "abnormalOrders": "Abnormal Orders",
+    "allOrders": "All Orders"
+  },
+  "taskCenter": {
+    "title": "Task Center",
+    "tabs": {
+      "active": "All Pending",
+      "mine": "My Tasks",
+      "completed": "History"
+    },
+    "card": {
+      "waitTime": "Wait Time",
+      "unassigned": "Unassigned",
+      "assignedTo": "Assigned to"
+    },
+    "actions": {
+      "claim": "Accept",
+      "unclaim": "Release",
+      "complete": "Mark Complete",
+      "addNote": "Add Note",
+      "confirmRecipient": "Confirm Recipient & Proceed",
+      "rejectRefund": "Reject / Refund",
+      "retry": "Retry Crediting",
+      "confirmClassification": "Confirm Classification",
+      "saveFields": "Save & Proceed",
+      "approveScreening": "Approve & Credit",
+      "closeNoAction": "Close — No Action Needed",
+      "viewInOrderCenter": "View in Order Center"
+    },
+    "toast": {
+      "claimed": "Task accepted",
+      "unclaimed": "Task released",
+      "completed": "Task marked complete",
+      "noteSaved": "Note saved",
+      "claimFailed": "Failed to accept task",
+      "unclaimFailed": "Failed to release task",
+      "completeFailed": "Failed to complete task",
+      "recipientConfirmed": "Recipient confirmed — deposit credited",
+      "retried": "Crediting retried — deposit processed",
+      "classified": "Classification confirmed",
+      "fieldsFilled": "Fields saved — deposit proceeds to screening",
+      "rejectedRefund": "Rejected — refund flow initiated",
+      "screeningApproved": "Screening approved — deposit credited",
+      "closed": "Task closed"
+    },
+    "panel": {
+      "candidates": "Potential Matches",
+      "noCandidates": "No candidate matches found. Investigate manually, then reject/refund if unresolvable.",
+      "classify": "Party Classification",
+      "nameMatchScore": "Name match score",
+      "ambiguousRange": "in the ambiguous range (0.5–0.85), manual confirmation required",
+      "firstPartyHint": "Sender is the account holder — fewer mandatory fields",
+      "thirdPartyHint": "Sender differs from account holder — requires payment reference",
+      "missingFields": "Missing Mandatory Fields",
+      "missingFieldsHint": "Fill in the missing fields if the client has provided them directly. Once complete, the deposit proceeds to screening.",
+      "channel": "Payment Channel",
+      "receivedAt": "Received At",
+      "rawPayload": "Raw Webhook Payload"
+    },
+    "dialog": {
+      "noteOptional": "Note (optional)…",
+      "reasonRequired": "Reason (required)…",
+      "confirmRecipientTitle": "Confirm recipient?",
+      "confirmRecipientDesc": "Confirm {{name}} as the recipient? This proceeds to compliance screening and crediting.",
+      "retryTitle": "Retry crediting?",
+      "retryDesc": "Confirm the account status is resolved. The deposit re-enters the pipeline at the classification step.",
+      "classifyTitle": "Confirm classification?",
+      "classifyDesc": "Classify this deposit as {{label}}? The deposit proceeds to screening with the corresponding mandatory fields.",
+      "fillFieldsTitle": "Save fields & proceed?",
+      "fillFieldsDesc": "Save the provided fields? Once all mandatory fields are present, the deposit proceeds to screening.",
+      "approveScreeningTitle": "Approve screening?",
+      "approveScreeningDesc": "Confirm compliance approval. The deposit will be credited to the recipient.",
+      "rejectRefundTitle": "Reject & refund?",
+      "rejectRefundDesc": "This rejects the deposit and initiates the refund flow. Provide a reason.",
+      "closeNoActionTitle": "Close with no action?",
+      "closeNoActionDesc": "Close this parse-failure task as non-actionable (e.g. test/garbage webhook). A reason is required."
+    },
+    "filters": {
+      "type": "Task Type",
+      "status": "Status",
+      "time": "Time",
+      "transactionId": "Transaction ID",
+      "transactionIdPlaceholder": "Search by transaction ID…"
+    },
+    "taskType": {
+      "DEPOSIT_RECIPIENT_MATCHING": "Client Identification",
+      "DEPOSIT_STATUS_EXCEPTION": "Account Status Exception",
+      "DEPOSIT_CLASSIFICATION": "Party Classification",
+      "DEPOSIT_MISSING_FIELDS_FYI": "Missing Fields (FYI)",
+      "DEPOSIT_SCREENING_REVIEW": "Compliance Screening Review",
+      "DEPOSIT_WEBHOOK_PARSE_FAILURE": "Webhook Parse Failure"
+    },
+    "taskTypeDesc": {
+      "DEPOSIT_RECIPIENT_MATCHING": "Identify the correct recipient for an unmatched deposit",
+      "DEPOSIT_STATUS_EXCEPTION": "Account suspended or frozen — credit blocked",
+      "DEPOSIT_CLASSIFICATION": "Confirm 1st or 3rd party classification",
+      "DEPOSIT_MISSING_FIELDS_FYI": "Missing fields RFI sent to client — monitor only",
+      "DEPOSIT_SCREENING_REVIEW": "VisionX screening returned Pending Review",
+      "DEPOSIT_WEBHOOK_PARSE_FAILURE": "Webhook payload could not be parsed"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "ABNORMAL": "Abnormal"
+    },
+    "escalation": {
+      "0": "Normal",
+      "1": "Flagged",
+      "2": "Mandatory Review",
+      "3": "Mandatory Escalation"
+    },
+    "audit": {
+      "created": "Task created",
+      "claimed": "Accepted",
+      "unclaimed": "Released",
+      "completed": "Marked complete",
+      "note": "Note added",
+      "abnormal": "Marked abnormal",
+      "recipientConfirmed": "Recipient confirmed",
+      "retried": "Crediting retried",
+      "classified": "Classification confirmed",
+      "fieldsFilled": "Missing fields provided",
+      "rejectedRefund": "Rejected — refund initiated",
+      "screeningApproved": "Screening approved",
+      "closedNoAction": "Closed — no action needed"
+    },
+    "drawer": {
+      "details": "Details",
+      "auditTrail": "Audit Trail",
+      "depositInfo": "Deposit Information",
+      "noAuditTrail": "No audit trail entries.",
+      "completePlaceholder": "Resolution note (optional)…"
+    },
+    "emptyActive": "No pending tasks",
+    "emptyActiveDesc": "All deposit tasks are resolved.",
+    "emptyCompleted": "No completed tasks",
+    "emptyCompletedDesc": "Completed tasks will appear here.",
+    "abnormalWarning": "This task encountered a system error and requires manual Ops or Admin intervention. Normal approval/rejection actions are unavailable."
+  },
+  "depositOrder": {
+    "pageTitle": {
+      "abnormal": "Abnormal Orders",
+      "all": "All Orders"
+    },
+    "pageSubtitle": {
+      "abnormal": "Deposits requiring manual intervention",
+      "all": "All deposit transaction records"
+    },
+    "actions": {
+      "addNote": "Add Note",
+      "markRefunded": "Mark as Refunded"
+    },
+    "toast": {
+      "noteSaved": "Note added to deposit",
+      "refundMarked": "Deposit marked as refunded"
+    },
+    "notePlaceholder": "Add a note to this deposit record…",
+    "refund": {
+      "intro": "Use this only after manually processing the refund through the bank channel. This marks the deposit as Refunded and removes it from the unclaimed funds ledger.",
+      "orderNumber": "Refund Order Number",
+      "date": "Refund Date",
+      "notes": "Refund Notes",
+      "notesPlaceholder": "Optional notes about this refund…",
+      "confirm": "Mark as Refunded"
+    },
+    "filter": {
+      "searchPlaceholder": "Search transaction ID, sender, reference code…",
+      "channel": "Channel",
+      "status": "Status",
+      "currency": "Currency",
+      "dateRange": "Date Range",
+      "amountRange": "Amount Range"
+    },
+    "col": {
+      "transactionId": "Transaction ID",
+      "paymentChannel": "Channel",
+      "amount": "Amount",
+      "currency": "Currency",
+      "valueDate": "Value Date",
+      "creditDate": "Credit Date",
+      "senderName": "Sender Name",
+      "senderAccount": "Sender Account",
+      "senderSwift": "SWIFT BIC",
+      "senderBankName": "Sender Bank",
+      "senderCountry": "Sender Country",
+      "beneficiaryName": "Beneficiary",
+      "beneficiaryAccount": "Beneficiary Account",
+      "beneficiaryCode": "Participant Code",
+      "referenceCode": "Reference Code",
+      "partyClassification": "Party",
+      "status": "Status",
+      "matchedRuleStep": "Rule Step",
+      "screeningResult": "Screening",
+      "opsHandler": "Ops Handler",
+      "remarks": "Remarks",
+      "anomalousReason": "Anomaly",
+      "ageing": "Ageing",
+      "createdAt": "Created At"
+    },
+    "status": {
+      "processing_auto": "Auto Processing",
+      "processing_manual_review": "Pending Review",
+      "processing_deferred": "Deferred",
+      "pending_rfi_missing_fields": "RFI — Missing Fields",
+      "pending_rfi_screening": "RFI — Screening",
+      "successful": "Successful",
+      "failed": "Failed",
+      "refunding": "Refunding",
+      "refunded": "Refunded"
+    },
+    "anomalousReason": {
+      "unidentified": "Client Unidentified",
+      "status_exception": "Account Status Exception",
+      "classification": "Party Classification Pending",
+      "missing_fields": "Missing Mandatory Fields",
+      "screening_review": "Screening Pending Review"
+    },
+    "party": {
+      "1st_party": "1st Party",
+      "3rd_party": "3rd Party",
+      "unclassified": "Unclassified"
+    },
+    "screening": {
+      "pass": "Pass",
+      "pending_review": "Pending Review",
+      "rejected": "Rejected",
+      "rfi": "RFI"
+    },
+    "ruleStep": {
+      "0": "Step 0 — Webhook Validation",
+      "1": "Step 1 — Account Exclusion",
+      "2": "Step 2 — Named VA / Account Match",
+      "3": "Step 3 — Reference Code Match",
+      "4": "Step 4 — Account Status Check",
+      "5": "Step 5 — Unidentified Fallback",
+      "6": "Step 6 — Party Classification",
+      "7": "Step 7 — Mandatory Fields",
+      "8": "Step 8 — Screening",
+      "9": "Step 9 — Value Date / Credit"
+    }
+  }
+}
