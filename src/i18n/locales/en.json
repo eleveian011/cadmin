@@ -15,8 +15,8 @@
   "nav": {
     "taskCenter": "Task Center",
     "orders": "Order Management",
-    "abnormalOrders": "Abnormal Orders",
-    "allOrders": "All Orders",
+    "abnormalOrders": "Pending Transaction Query",
+    "allOrders": "Full Transaction Query",
     "channelAccounts": "Fiat Account Mapping"
   },
   "taskCenter": {
@@ -388,13 +388,12 @@
     "col": {
       "channel": "Payment Channel",
       "accountType": "Account Type",
-      "channelAccountNumber": "Channel Account Number",
+      "channelAccountNumber": "Channel Account Number (Internal)",
       "referenceCode": "Reference Code",
-      "mcaAccountNumber": "MCA Account Number",
+      "userChannelAccountNumber": "User Channel Account Number",
       "currency": "Currency",
       "clientName": "Client Name",
       "participantCode": "Participant Code",
-      "memberId": "Member ID",
       "participantStatus": "Participant Status",
       "memberStatus": "Member Status",
       "mappingStatus": "Mapping Status"
@@ -450,7 +449,7 @@
       "editTitle": "Edit Channel Account",
       "create": "Create Entry",
       "refCodeHint": "System-generated. Not editable.",
-      "identityHint": "Auto-populated from CAMP on MCA number entry in production.",
+      "identityHint": "Auto-populated from CAMP on Participant Code entry in production.",
       "identityReadOnly": "Client identity is sourced from CAMP and read-only after creation.",
       "nonGldbReadOnly": "Read-only for non-GLDB channels."
     },
@@ -508,9 +507,157 @@
       "clientPlaceholder": "Match client name or participant code…",
       "accountNumberPlaceholder": "Match channel account number…",
       "referenceCodePlaceholder": "Match reference code…",
-      "mcaPlaceholder": "Match MCA account number…",
-      "currencyPlaceholder": "e.g. SGD, USD…",
-      "memberIdPlaceholder": "Match member ID…"
+      "userChannelAccountPlaceholder": "Match user channel account number…",
+      "currencyPlaceholder": "e.g. SGD, USD…"
+    }
+  },
+  "gldbParser": {
+    "title": "GLDB Webhook Parser",
+    "subtitle": "Paste a GLDB deposit webhook to parse its fields and look up the payee in the Fiat Account Mapping Reference Table.",
+    "inputLabel": "Paste GLDB Webhook JSON",
+    "inputPlaceholder": "Paste the GLDB webhook JSON payload here. It parses automatically.",
+    "paste": "Paste",
+    "clear": "Clear",
+    "pasteFailed": "Couldn't read clipboard — paste manually (Cmd/Ctrl+V).",
+    "notProvided": "(not provided)",
+    "emptyState": "No webhook parsed yet",
+    "emptyStateHint": "Paste a webhook JSON on the left to see the parsed fields and payee here.",
+    "section": {
+      "transaction": "Transaction Details",
+      "payee": "Payee",
+      "summary": "Manual Booking Summary"
+    },
+    "confidence": {
+      "exact": "Exact Match",
+      "multiple": "Multiple Matches",
+      "none": "No Match"
+    },
+    "payee": {
+      "matchN": "Match {{n}} of {{total}}",
+      "account": "Account",
+      "notFoundTitle": "Payee Not Found",
+      "notFoundDesc": "No mapping entry was found for account number",
+      "goToMapping": "Search the Mapping Table",
+      "viewInMapping": "View in Fiat Account Mapping",
+      "multipleHint": "Multiple Account Types matched this account number. Select the correct one based on the deposit context before booking.",
+      "statusWarning": "Account status is non-Active — confirm with Ops Admin before proceeding.",
+      "inactiveWarning": "Mapping is inactive — check whether this account should be re-activated."
+    },
+    "summary": {
+      "copy": "Copy Summary",
+      "copiedShort": "Copied",
+      "copied": "Summary copied to clipboard",
+      "copyFailed": "Copy failed — select and copy manually"
+    },
+    "error": {
+      "invalid-json": "Invalid JSON — check the payload syntax.",
+      "missing-account": "Missing required field: acctNo (or receiverAcctNo).",
+      "missing-sender": "Missing required field: senderAcctNm (sender name)."
+    },
+    "warn": {
+      "unknownCurrency": "Unknown currency code — verify against ISO 4217.",
+      "invalidAmount": "Amount is not a valid number."
+    }
+  },
+  "recon": {
+    "title": "Reconciliation Report",
+    "subtitle": "Hourly channel-vs-order reconciliation outcomes. Review and resolve discrepancies.",
+    "daysShort": "{{n}}d",
+    "tab": {
+      "open": "Open Discrepancies",
+      "cycle": "Cycle Results",
+      "resolved": "Resolved History"
+    },
+    "col": {
+      "transactionId": "Transaction ID",
+      "channel": "Payment Channel",
+      "outcome": "Discrepancy Type",
+      "channelValue": "Channel Value",
+      "orderValue": "Order Value",
+      "detail": "Detail",
+      "firstSeen": "First Seen",
+      "age": "Age",
+      "cycleCount": "Cycle Count",
+      "severity": "Severity",
+      "resolvedAt": "Resolved At",
+      "resolutionNote": "Resolution Note",
+      "cycleId": "Cycle ID"
+    },
+    "severity": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "outcome": {
+      "UnmatchedChannelTransaction": "Unmatched Channel Transaction",
+      "MissingChannelTransaction": "Missing Channel Transaction",
+      "AmountMismatch": "Amount Mismatch",
+      "FeeMismatch": "Fee Mismatch",
+      "CurrencyMismatch": "Currency Mismatch",
+      "CounterpartyNameMismatch": "Counterparty Name Mismatch",
+      "CounterpartyAccountNoMismatch": "Counterparty Account No Mismatch",
+      "PaymentReferenceMismatch": "Payment Reference Mismatch",
+      "ValueDateMismatch": "Value Date Mismatch",
+      "StatusAnomaly": "Status Anomaly",
+      "StatusContradiction": "Status Contradiction",
+      "OrphanDuplicate": "Orphan Duplicate"
+    },
+    "filter": {
+      "txidPlaceholder": "Match transaction ID…",
+      "cycleId": "Cycle ID",
+      "cycleIdPlaceholder": "e.g. RECON-2026-06-17-10-00",
+      "allChannels": "All Channels",
+      "allSeverities": "All Severities",
+      "allOutcomes": "All Discrepancy Types",
+      "outcomesSelected": "{{n}} selected",
+      "ageRange": "Age Range (days)",
+      "resolvedRange": "Resolved Date Range",
+      "min": "Min",
+      "max": "Max",
+      "expand": "More filters",
+      "collapse": "Fewer filters",
+      "reset": "Reset"
+    },
+    "detail": {
+      "title": "Discrepancy Detail",
+      "comparison": "Channel vs Order Comparison",
+      "channelSide": "Channel Value",
+      "orderSide": "Order Value",
+      "channelTxId": "Channel Transaction ID",
+      "timeline": "Discrepancy Timeline",
+      "firstSeen": "First detected",
+      "lastSeen": "Last confirmed ({{n}} cycles)",
+      "resolved": "Resolved",
+      "viewInOrders": "View in Order Center",
+      "viewChannelTxn": "View Channel Transaction",
+      "resolvedTitle": "Resolved"
+    },
+    "resolve": {
+      "title": "Resolve Discrepancy",
+      "note": "Resolution note",
+      "notePlaceholder": "Describe how this discrepancy was resolved…",
+      "correctionOrder": "Link to correction order",
+      "confirm": "Resolve",
+      "done": "Discrepancy resolved"
+    },
+    "cycle": {
+      "summary": "{{total}} txns · {{matched}} matched · {{unmatched}} unmatched · {{discrepancy}} discrepancies",
+      "byOutcome": "Discrepancies by type",
+      "count": "{{n}} record(s)",
+      "noDiscrepancies": "No discrepancies in this cycle."
+    },
+    "actions": {
+      "resolve": "Resolve"
+    },
+    "export": {
+      "button": "Export",
+      "done": "Export started — file will download shortly (demo)."
+    },
+    "empty": {
+      "open": "No open discrepancies",
+      "resolved": "No resolved discrepancies",
+      "cycles": "No reconciliation cycles yet"
     }
   }
 }

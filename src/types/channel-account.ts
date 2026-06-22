@@ -1,10 +1,15 @@
 /**
- * Channel Account — Fiat Account Mapping Reference Table (PRD §7.4).
+ * Channel Account — Fiat Account Mapping Reference Table (PRD §7.4, v0.2).
  *
  * A unified reference table mapping a payment-channel account number to a CAMP
- * client account (MCA number), with client identity + account status for the
- * deposit STP rule engine. This is the domain model behind the new standalone
- * "Fiat Account Mapping Reference Table" admin page.
+ * client account, with client identity + account status for the deposit STP rule
+ * engine. This is the domain model behind the "Fiat Account Mapping Reference
+ * Table" admin page.
+ *
+ * v0.2 schema: the single MCA field was split into two distinct numbers —
+ * `channel_account_number` (Channel Account Number, Internal) and
+ * `user_channel_account_number` (User Channel Account Number, user-facing). Client
+ * identity is keyed on Participant Code; the legacy Member ID column was removed.
  */
 
 /** Supported payment channels (§7.4 — bulk upload is GLDB-only). */
@@ -60,18 +65,19 @@ export interface ChannelAccount {
 
   /* ── Mapping keys (uniqueness: channel + channel_account_number + account_type) ── */
   payment_channel:        ChannelAccountChannel
+  /** Channel Account Number (Internal) — internal mapping key. */
   channel_account_number: string
-  mca_account_number:     string
+  /** User Channel Account Number — user-facing external channel account number. */
+  user_channel_account_number: string
   account_type:           AccountType
 
   /** System-generated; not editable via Admin UI or bulk upload. Null for Named VAs. */
   reference_code:         string | null
   currency:               string
 
-  /* ── Client identity — auto-populated via CAMP lookup, read-only after creation ── */
+  /* ── Client identity — auto-populated via CAMP lookup on Participant Code, read-only after creation ── */
   client_name:            string
   participant_code:       string | null
-  member_id:              string | null
   participant_status:     ClientStatus
   member_status:          ClientStatus
 
@@ -93,13 +99,12 @@ export interface ChannelAccount {
 
 /** A row parsed from a bulk-upload Excel file, before validation/commit. */
 export interface BulkUploadRow {
-  payment_channel:        string
-  channel_account_number: string
-  mca_account_number:     string
-  currency:               string
-  account_type:           string
-  participant_code:       string
-  member_id:              string
+  payment_channel:             string
+  channel_account_number:      string
+  user_channel_account_number: string
+  currency:                    string
+  account_type:                string
+  participant_code:            string
 }
 
 /** Per-row outcome after a bulk upload run. */

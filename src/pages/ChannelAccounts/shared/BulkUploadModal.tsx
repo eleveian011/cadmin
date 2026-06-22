@@ -102,7 +102,7 @@ export function BulkUploadModal({ open, onClose, t }) {
 
   const handleTemplate = () => {
     // Template is a backend-provided artifact; demo serves a tiny inline CSV header.
-    const cols = 'Payment Channel,Channel Account Number,MCA Account Number,Currency,Account Type,Participant Code,Member ID'
+    const cols = 'Payment Channel,Channel Account Number,User Channel Account Number,Currency,Account Type,Participant Code'
     const url = `data:text/csv;charset=utf-8,${encodeURIComponent(cols + '\n')}`
     const a = document.createElement('a')
     a.href = url

@@ -5,6 +5,8 @@ import Placeholder from './pages/Placeholder'
 import TaskCenter from './pages/TaskCenter'
 import OrderManagement from './pages/Orders'
 import ChannelAccounts from './pages/ChannelAccounts'
+import GldbParser from './pages/GldbParser'
+import Reconciliation from './pages/Reconciliation'
 
 export default function App() {
   return (
@@ -16,6 +18,8 @@ export default function App() {
           <Route path="/task-center"         element={<TaskCenter />} />
           <Route path="/orders"              element={<OrderManagement />} />
           <Route path="/channel-accounts"    element={<ChannelAccounts />} />
+          <Route path="/gldb-parser"          element={<GldbParser />} />
+          <Route path="/reconciliation"       element={<Reconciliation />} />
           <Route path="/orders/anomalous"    element={<Navigate to="/orders" replace />} />
           <Route path="/orders/all"          element={<Navigate to="/orders" replace />} />
           <Route path="/assets"              element={<Navigate to="/task-center" replace />} />

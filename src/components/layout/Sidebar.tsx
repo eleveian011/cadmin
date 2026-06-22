@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { NavLink } from 'react-router-dom'
 import {
   SwatchBook,
-  ClipboardList, ReceiptText, Landmark,
+  ClipboardList, ReceiptText, Landmark, FileJson, Scale,
   MoreHorizontal, Sun, Moon, LogOut, Menu,
   type LucideIcon,
 } from 'lucide-react'
@@ -24,6 +24,8 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/task-center',     Icon: ClipboardList, label: 'Task Center' },
   { to: '/orders',          Icon: ReceiptText,   label: 'Order Management' },
   { to: '/channel-accounts', Icon: Landmark,     label: 'Fiat Account Mapping' },
+  { to: '/reconciliation',  Icon: Scale,         label: 'Reconciliation Report' },
+  { to: '/gldb-parser',     Icon: FileJson,      label: 'GLDB Webhook Parser' },
   { to: '/cds-guideline',   Icon: SwatchBook,    label: 'CDS Guideline' },
 ]
 

@@ -23,23 +23,22 @@ function Field({ label, required, hint, children }) {
 const EMPTY = {
   payment_channel: 'GLDB',
   channel_account_number: '',
-  mca_account_number: '',
+  user_channel_account_number: '',
   account_type: 'fiat',
   currency: '',
   client_name: '',
   participant_code: '',
-  member_id: '',
   // bank info
   ben_name: '', ben_address: '', ben_country: '',
   bank_name: '', bank_account: '', bank_swift: '', bank_country: '', bank_address: '',
 }
 
 /**
- * Add / Edit entry modal (§7.4 Operations).
+ * Add / Edit entry modal (§7.4 Operations, v0.2).
  * - Add: all fields editable except Reference Code (system-generated).
- * - Edit: GLDB → channel account number + MCA number editable; non-GLDB → both read-only.
- *   Client identity fields (name, participant code, member id, statuses) are always
- *   read-only after creation.
+ * - Edit: GLDB → channel account number + user channel account number editable;
+ *   non-GLDB → both read-only. Client identity fields (name, participant code,
+ *   statuses) are always read-only after creation.
  */
 export function AccountFormModal({ account, open, onClose, t }) {
   const isEdit = !!account
@@ -56,12 +55,11 @@ export function AccountFormModal({ account, open, onClose, t }) {
       setForm({
         payment_channel: account.payment_channel,
         channel_account_number: account.channel_account_number,
-        mca_account_number: account.mca_account_number,
+        user_channel_account_number: account.user_channel_account_number,
         account_type: account.account_type,
         currency: account.currency,
         client_name: account.client_name,
         participant_code: account.participant_code ?? '',
-        member_id: account.member_id ?? '',
         ben_name: account.beneficiary.name,
         ben_address: account.beneficiary.address,
         ben_country: account.beneficiary.country,
@@ -77,20 +75,19 @@ export function AccountFormModal({ account, open, onClose, t }) {
   }, [open, account?.id])
 
   const isGldb = form.payment_channel === 'GLDB'
-  // Edit: channel account number editable only for GLDB; MCA number editable only for GLDB.
+  // Edit: channel account number + user channel account number editable only for GLDB.
   const channelAcctReadOnly = isEdit && !isGldb
-  const mcaReadOnly         = isEdit && !isGldb
+  const userAcctReadOnly    = isEdit && !isGldb
   // Client identity is read-only on edit (auto-populated from CAMP).
   const identityReadOnly    = isEdit
 
-  // Validation: at least one client identifier; key mapping fields present.
-  const hasIdentity = !!(form.participant_code.trim() || form.member_id.trim())
+  // Validation: Participant Code required; key mapping fields present.
   const valid = !!(
     form.channel_account_number.trim() &&
-    form.mca_account_number.trim() &&
+    form.user_channel_account_number.trim() &&
     form.currency.trim() &&
     form.client_name.trim() &&
-    hasIdentity
+    form.participant_code.trim()
   )
 
   const channelOpts     = CHANNEL_OPTIONS.map(c => ({ value: c, label: c }))
@@ -111,7 +108,7 @@ export function AccountFormModal({ account, open, onClose, t }) {
       update.mutateAsync({
         id: account.id,
         channel_account_number: isGldb ? form.channel_account_number.trim() : undefined,
-        mca_account_number:     isGldb ? form.mca_account_number.trim() : undefined,
+        user_channel_account_number: isGldb ? form.user_channel_account_number.trim() : undefined,
         beneficiary:  bank.beneficiary,
         bank_details: bank.bank_details,
         intermediary_bank: account.intermediary_bank,
@@ -123,13 +120,12 @@ export function AccountFormModal({ account, open, onClose, t }) {
       create.mutateAsync({
         payment_channel: form.payment_channel,
         channel_account_number: form.channel_account_number.trim(),
-        mca_account_number: form.mca_account_number.trim(),
+        user_channel_account_number: form.user_channel_account_number.trim(),
         account_type: form.account_type,
         currency: form.currency.trim(),
         mapping_status: 'active',
         client_name: form.client_name.trim(),
         participant_code: form.participant_code.trim() || null,
-        member_id: form.member_id.trim() || null,
         beneficiary:  bank.beneficiary,
         bank_details: bank.bank_details,
         intermediary_bank: null,
@@ -191,14 +187,14 @@ export function AccountFormModal({ account, open, onClose, t }) {
                 placeholder="GLDB-8800-…"
               />
             </Field>
-            <Field label={t('channelAccount.col.mcaAccountNumber')} required
-              hint={mcaReadOnly ? t('channelAccount.form.nonGldbReadOnly') : undefined}>
+            <Field label={t('channelAccount.col.userChannelAccountNumber')} required
+              hint={userAcctReadOnly ? t('channelAccount.form.nonGldbReadOnly') : undefined}>
               <CdsInput
-                size="md" value={form.mca_account_number}
-                onChange={e => set({ mca_account_number: e.target.value })}
-                disabled={mcaReadOnly}
-                className={mcaReadOnly ? ro : ''}
-                placeholder="MCA-…"
+                size="md" value={form.user_channel_account_number}
+                onChange={e => set({ user_channel_account_number: e.target.value })}
+                disabled={userAcctReadOnly}
+                className={userAcctReadOnly ? ro : ''}
+                placeholder="UCA-…"
               />
             </Field>
             <Field label={t('channelAccount.col.currency')} required>
@@ -224,13 +220,9 @@ export function AccountFormModal({ account, open, onClose, t }) {
                 disabled={identityReadOnly} className={identityReadOnly ? ro : ''} />
             </Field>
             <span />
-            <Field label={t('channelAccount.col.participantCode')}>
+            <Field label={t('channelAccount.col.participantCode')} required>
               <CdsInput size="md" value={form.participant_code} onChange={e => set({ participant_code: e.target.value })}
                 disabled={identityReadOnly} className={identityReadOnly ? ro : ''} placeholder="PART-…" />
-            </Field>
-            <Field label={t('channelAccount.col.memberId')}>
-              <CdsInput size="md" value={form.member_id} onChange={e => set({ member_id: e.target.value })}
-                disabled={identityReadOnly} className={identityReadOnly ? ro : ''} placeholder="MBR-…" />
             </Field>
           </div>
         </section>

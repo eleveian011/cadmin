@@ -397,6 +397,12 @@ select {
 @keyframes drawerSlideIn { from { transform: translateX(100%) } to { transform: translateX(0) } }
 @keyframes drawerSlideInLeft { from { transform: translateX(-100%) } to { transform: translateX(0) } }
 
+/* ── Carousel slide-in (GLDB parser payee switcher) ─────────────── */
+@keyframes carouselInRight { from { opacity: 0; transform: translateX(28px) } to { opacity: 1; transform: translateX(0) } }
+@keyframes carouselInLeft  { from { opacity: 0; transform: translateX(-28px) } to { opacity: 1; transform: translateX(0) } }
+.animate-carousel-right { animation: carouselInRight 240ms ease-out }
+.animate-carousel-left  { animation: carouselInLeft 240ms ease-out }
+
 .pageTitle {
   font-size: 28px;
   font-weight: 700;

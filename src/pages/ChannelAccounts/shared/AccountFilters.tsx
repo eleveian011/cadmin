@@ -61,9 +61,8 @@ export function AccountFilters({ applied, onApply, onReset, count, t }) {
       {expanded && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {textCell('reference_code', t('channelAccount.col.referenceCode'), t('channelAccount.filter.referenceCodePlaceholder'))}
-          {textCell('mca_account', t('channelAccount.col.mcaAccountNumber'), t('channelAccount.filter.mcaPlaceholder'))}
+          {textCell('user_channel_account', t('channelAccount.col.userChannelAccountNumber'), t('channelAccount.filter.userChannelAccountPlaceholder'))}
           {textCell('currency', t('channelAccount.col.currency'), t('channelAccount.filter.currencyPlaceholder'))}
-          {textCell('member_id', t('channelAccount.col.memberId'), t('channelAccount.filter.memberIdPlaceholder'))}
           {selectCell('participant_status', t('channelAccount.col.participantStatus'), statusOpts)}
           {selectCell('member_status', t('channelAccount.col.memberStatus'), statusOpts)}
         </div>

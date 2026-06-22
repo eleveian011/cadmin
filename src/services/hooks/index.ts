@@ -3,6 +3,10 @@ export type { DepositOrdersFilter, MarkRefundedPayload } from './useDepositOrder
 export { useExport } from './useExport'
 export type { ExportParams, ExportResult } from './useExport'
 export { useClientSearch } from './useClients'
+export { usePayeeLookup } from './useGldbParser'
+export type { PayeeLookupResult } from './useGldbParser'
+export { useReconResults, useReconCycles, useResolveReconResult } from './useReconciliation'
+export type { ReconResultsFilter, ResolveReconPayload } from './useReconciliation'
 export {
   useChannelAccounts, useChannelAccount,
   useCreateChannelAccount, useUpdateChannelAccount, useSetMappingStatus,

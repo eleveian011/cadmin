@@ -67,23 +67,22 @@ export function fmtDateParts(iso: string | null): { date: string; time: string }
 /** Initial / cleared state for the filter board. Single-select fields default to ''. */
 export const EMPTY_ACCOUNT_FILTERS = {
   channel: '', account_type: '', channel_account: '', reference_code: '',
-  mca_account: '', currency: '', client_q: '', member_id: '',
+  user_channel_account: '', currency: '', client_q: '',
   participant_status: '', member_status: '',
 }
 
 /** Map a filter-board object → ChannelAccountsFilter query params (undefined = unset). */
 export function toAccountQuery(f: any) {
   return {
-    channel:            f.channel || undefined,
-    account_type:       f.account_type || undefined,
-    channel_account:    f.channel_account?.trim() || undefined,
-    reference_code:     f.reference_code?.trim() || undefined,
-    mca_account:        f.mca_account?.trim() || undefined,
-    currency:           f.currency || undefined,
-    client_q:           f.client_q?.trim() || undefined,
-    member_id:          f.member_id?.trim() || undefined,
-    participant_status: f.participant_status || undefined,
-    member_status:      f.member_status || undefined,
+    channel:              f.channel || undefined,
+    account_type:         f.account_type || undefined,
+    channel_account:      f.channel_account?.trim() || undefined,
+    reference_code:       f.reference_code?.trim() || undefined,
+    user_channel_account: f.user_channel_account?.trim() || undefined,
+    currency:             f.currency || undefined,
+    client_q:             f.client_q?.trim() || undefined,
+    participant_status:   f.participant_status || undefined,
+    member_status:        f.member_status || undefined,
   }
 }
 

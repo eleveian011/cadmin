@@ -16,12 +16,14 @@ import { depositOrders as ordersSeed } from '../data/deposit-orders'
 import { depositTasks as tasksSeed }    from '../data/tasks'
 import { clients as clientsSeed }       from '../data/clients'
 import { channelAccounts as channelAccountsSeed } from '../data/channel-accounts'
+import { reconResults as reconSeed, reconCycles as reconCyclesSeed } from '../data/reconciliation'
 import type { DepositOrder } from '../types/deposit-order'
 import type { DepositTask, TaskStatus, ClientSearchResult } from '../types/task'
 import type {
   ChannelAccount, ChannelAccountChannel, AccountType, MappingStatus,
   DuplicateMode, BulkUploadResult, BulkRowResult,
 } from '../types/channel-account'
+import type { ReconResult, ReconCycle, ReconSeverity, ReconOutcome } from '../types/reconciliation'
 import type { PaginatedResponse } from '../types/api'
 
 /* ─── Mutable in-memory state (seeded once per page load) ────── */
@@ -30,6 +32,8 @@ const orders: DepositOrder[]  = ordersSeed.map(d => ({ ...d }))
 const tasks:  DepositTask[]   = tasksSeed.map(t => ({ ...t, history: [...t.history] }))
 const clients: ClientSearchResult[] = clientsSeed
 const channelAccts: ChannelAccount[] = channelAccountsSeed.map(c => ({ ...c, history: [...c.history] }))
+const reconResults: ReconResult[] = reconSeed.map(r => ({ ...r }))
+const reconCycles:  ReconCycle[]  = reconCyclesSeed.map(c => ({ ...c }))
 
 // "Current user" — in a real app this comes from the session.
 const ACTOR = { id: 'ops_002', name: 'Alex Chen' }
@@ -611,19 +615,18 @@ export interface ChannelAccountsFilter {
   account_type?:       AccountType | ''
   channel_account?:    string
   reference_code?:     string
-  mca_account?:        string
+  user_channel_account?: string
   currency?:           string
   client_name?:        string
   participant_code?:   string
   /** Combined "Client Name or Participant Code" search (matches either field). */
   client_q?:           string
-  member_id?:          string
   /** Comma-separated participant statuses. */
   participant_status?: string
   /** Comma-separated member statuses. */
   member_status?:      string
   mapping_status?:     MappingStatus | ''
-  /** Free-text search across channel account / MCA / client / reference. */
+  /** Free-text search across channel account / user channel account / client / reference. */
   q?:                  string
   page?:               number
   per_page?:           number
@@ -639,12 +642,11 @@ export function listChannelAccounts(filter: ChannelAccountsFilter = {}): Promise
   const mStatuses = filter.member_status ? filter.member_status.split(',') : []
   const chanAcct  = lc(filter.channel_account)
   const refCode   = lc(filter.reference_code)
-  const mca       = lc(filter.mca_account)
+  const userAcct  = lc(filter.user_channel_account)
   const currency  = lc(filter.currency)
   const clientNm  = lc(filter.client_name)
   const partCode  = lc(filter.participant_code)
   const clientQ   = lc(filter.client_q)
-  const memberId  = lc(filter.member_id)
   const q         = lc(filter.q)
 
   let items = channelAccts.filter(c => !c.archived)
@@ -656,17 +658,16 @@ export function listChannelAccounts(filter: ChannelAccountsFilter = {}): Promise
   if (mStatuses.length) items = items.filter(c => mStatuses.includes(c.member_status))
   if (chanAcct) items = items.filter(c => c.channel_account_number.toLowerCase().includes(chanAcct))
   if (refCode)  items = items.filter(c => (c.reference_code ?? '').toLowerCase().includes(refCode))
-  if (mca)      items = items.filter(c => c.mca_account_number.toLowerCase().includes(mca))
+  if (userAcct) items = items.filter(c => c.user_channel_account_number.toLowerCase().includes(userAcct))
   if (currency) items = items.filter(c => c.currency.toLowerCase().includes(currency))
   if (clientNm) items = items.filter(c => c.client_name.toLowerCase().includes(clientNm))
   if (partCode) items = items.filter(c => (c.participant_code ?? '').toLowerCase().includes(partCode))
   if (clientQ)  items = items.filter(c =>
     c.client_name.toLowerCase().includes(clientQ) ||
     (c.participant_code ?? '').toLowerCase().includes(clientQ))
-  if (memberId) items = items.filter(c => (c.member_id ?? '').toLowerCase().includes(memberId))
   if (q) items = items.filter(c =>
     c.channel_account_number.toLowerCase().includes(q) ||
-    c.mca_account_number.toLowerCase().includes(q) ||
+    c.user_channel_account_number.toLowerCase().includes(q) ||
     c.client_name.toLowerCase().includes(q) ||
     (c.reference_code ?? '').toLowerCase().includes(q))
 
@@ -688,14 +689,13 @@ export function getChannelAccount(id: string): Promise<ChannelAccount> {
 export interface CreateChannelAccountPayload {
   payment_channel:        ChannelAccountChannel
   channel_account_number: string
-  mca_account_number:     string
+  user_channel_account_number: string
   account_type:           AccountType
   currency:               string
   mapping_status:         MappingStatus
-  /** Client identity — in a real system auto-populated via CAMP lookup on MCA entry. */
+  /** Client identity — in a real system auto-populated via CAMP lookup on Participant Code entry. */
   client_name:            string
   participant_code:       string | null
-  member_id:              string | null
   beneficiary:            ChannelAccount['beneficiary']
   bank_details:           ChannelAccount['bank_details']
   intermediary_bank:      ChannelAccount['intermediary_bank']
@@ -714,13 +714,12 @@ export function createChannelAccount(payload: CreateChannelAccountPayload): Prom
     id: `ca_${Date.now()}`,
     payment_channel:        payload.payment_channel,
     channel_account_number: payload.channel_account_number.trim(),
-    mca_account_number:     payload.mca_account_number.trim(),
+    user_channel_account_number: payload.user_channel_account_number.trim(),
     account_type:           payload.account_type,
     reference_code:         null,
     currency:               payload.currency.trim().toUpperCase(),
     client_name:            payload.client_name.trim(),
     participant_code:       payload.participant_code?.trim() || null,
-    member_id:              payload.member_id?.trim() || null,
     participant_status:     'active',
     member_status:          'active',
     mapping_status:         payload.mapping_status,
@@ -739,9 +738,9 @@ export function createChannelAccount(payload: CreateChannelAccountPayload): Prom
 
 export interface UpdateChannelAccountPayload {
   id: string
-  /** GLDB entries may correct these; non-GLDB channel account number is read-only. */
+  /** GLDB entries may correct these; non-GLDB account numbers are read-only. */
   channel_account_number?: string
-  mca_account_number?:     string
+  user_channel_account_number?: string
   mapping_status?:         MappingStatus
   bank_details?:           ChannelAccount['bank_details']
   intermediary_bank?:      ChannelAccount['intermediary_bank']
@@ -754,7 +753,7 @@ export function updateChannelAccount(payload: UpdateChannelAccountPayload): Prom
   if (!acct) return Promise.reject(new Error('Channel account not found'))
 
   const isGldb = acct.payment_channel === 'GLDB'
-  // Non-GLDB: channel account number + MCA number are read-only (§7.4 Edit Entry).
+  // Non-GLDB: channel account number + user channel account number are read-only (§7.4 Edit Entry).
   if (isGldb && payload.channel_account_number != null) {
     const next = payload.channel_account_number.trim()
     const key  = acctKey(acct.payment_channel, next, acct.account_type)
@@ -763,7 +762,7 @@ export function updateChannelAccount(payload: UpdateChannelAccountPayload): Prom
     if (clash) return Promise.reject(new Error('Another active mapping already uses this Channel Account Number for this channel + account type.'))
     acct.channel_account_number = next
   }
-  if (isGldb && payload.mca_account_number != null) acct.mca_account_number = payload.mca_account_number.trim()
+  if (isGldb && payload.user_channel_account_number != null) acct.user_channel_account_number = payload.user_channel_account_number.trim()
   if (payload.mapping_status != null)    acct.mapping_status = payload.mapping_status
   if (payload.bank_details != null)      acct.bank_details = payload.bank_details
   if (payload.intermediary_bank !== undefined) acct.intermediary_bank = payload.intermediary_bank
@@ -817,27 +816,26 @@ export interface BulkUploadPayload {
 
 /** A synthetic "parsed" row the mock backend pretends it read from the workbook. */
 interface ParsedBulkRow {
-  channel_account_number: string
-  mca_account_number:     string
-  currency:               string
-  account_type:           AccountType
-  participant_code:       string | null
-  member_id:              string | null
-  client_name:            string
+  channel_account_number:      string
+  user_channel_account_number: string
+  currency:                    string
+  account_type:                AccountType
+  participant_code:            string | null
+  client_name:                 string
   /** Set when the row is intentionally invalid, so we can report a rejection. */
-  invalidReason?:         string
+  invalidReason?:              string
 }
 
 /** Fixed synthetic batch — represents what the backend parsed out of the file. */
 const SYNTHETIC_BULK_BATCH: ParsedBulkRow[] = [
   // New rows (no existing GLDB match) → added
-  { channel_account_number: 'GLDB-8800-2001-0001', mca_account_number: 'MCA-RDM-001', currency: 'SGD', account_type: 'fiat', participant_code: 'PART-RDM-001', member_id: null, client_name: 'RedMart Logistics' },
-  { channel_account_number: 'GLDB-8800-2001-0002', mca_account_number: 'MCA-GJK-001', currency: 'IDR', account_type: 'fiat', participant_code: 'PART-GJK-001', member_id: null, client_name: 'Gojek Tech Sub' },
-  { channel_account_number: 'GLDB-8800-2001-0003', mca_account_number: 'MCA-SHP-002', currency: 'USD', account_type: 'investment_fiat', participant_code: null, member_id: 'MBR-SHP-002', client_name: 'Shopee Express' },
+  { channel_account_number: 'GLDB-8800-2001-0001', user_channel_account_number: 'UCA-RDM-001', currency: 'SGD', account_type: 'fiat', participant_code: 'PART-RDM-001', client_name: 'RedMart Logistics' },
+  { channel_account_number: 'GLDB-8800-2001-0002', user_channel_account_number: 'UCA-GJK-001', currency: 'IDR', account_type: 'fiat', participant_code: 'PART-GJK-001', client_name: 'Gojek Tech Sub' },
+  { channel_account_number: 'GLDB-8800-2001-0003', user_channel_account_number: 'UCA-SHP-002', currency: 'USD', account_type: 'investment_fiat', participant_code: 'PART-SHP-002', client_name: 'Shopee Express' },
   // Collides with existing GLDB ca_001 (same channel + account no + type) → updated or ignored per mode
-  { channel_account_number: 'GLDB-8800-1234-5678', mca_account_number: 'MCA-ALI-001', currency: 'SGD', account_type: 'fiat', participant_code: 'PART-ALI-001', member_id: 'MBR-ALI-001', client_name: 'Alibaba Group Holding Limited' },
-  // Invalid: neither participant code nor member id → rejected regardless of mode
-  { channel_account_number: 'GLDB-8800-2001-0009', mca_account_number: 'MCA-UNK-999', currency: 'SGD', account_type: 'fiat', participant_code: null, member_id: null, client_name: '', invalidReason: 'Missing client identifier — provide Participant Code or Member ID.' },
+  { channel_account_number: 'GLDB-8800-1234-5678', user_channel_account_number: 'UCA-ALI-001', currency: 'SGD', account_type: 'fiat', participant_code: 'PART-ALI-001', client_name: 'Alibaba Group Holding Limited' },
+  // Invalid: no participant code → rejected regardless of mode
+  { channel_account_number: 'GLDB-8800-2001-0009', user_channel_account_number: 'UCA-UNK-999', currency: 'SGD', account_type: 'fiat', participant_code: null, client_name: '', invalidReason: 'Missing client identifier — Participant Code is required.' },
 ]
 
 /** POST /channel-accounts/bulk-upload — returns the result report (backend-parsed). */
@@ -869,10 +867,9 @@ export function bulkUploadChannelAccounts(payload: BulkUploadPayload): Promise<B
         rows.push({ rowNumber, outcome: 'ignored', channel_account_number: row.channel_account_number, reason: 'Duplicate — existing row kept unchanged.' })
       } else {
         // overwrite: update mutable fields of the existing row
-        existing.mca_account_number = row.mca_account_number
+        existing.user_channel_account_number = row.user_channel_account_number
         existing.currency           = row.currency
         existing.participant_code   = row.participant_code
-        existing.member_id          = row.member_id
         existing.client_name        = row.client_name
         existing.updated_at         = now
         pushAcctHistory(existing, 'ACCOUNT_BULK_UPDATED', `Updated via bulk upload (${payload.fileName})`)
@@ -887,13 +884,12 @@ export function bulkUploadChannelAccounts(payload: BulkUploadPayload): Promise<B
       id: `ca_${Date.now()}_${i}`,
       payment_channel:        'GLDB',
       channel_account_number: row.channel_account_number,
-      mca_account_number:     row.mca_account_number,
+      user_channel_account_number: row.user_channel_account_number,
       account_type:           row.account_type,
       reference_code:         null,
       currency:               row.currency,
       client_name:            row.client_name,
       participant_code:       row.participant_code,
-      member_id:              row.member_id,
       participant_status:     'active',
       member_status:          'active',
       mapping_status:         'active',
@@ -914,7 +910,129 @@ export function bulkUploadChannelAccounts(payload: BulkUploadPayload): Promise<B
   return tick({ added, updated, ignored, rejected, rows })
 }
 
+// CHUNK_GLDB_PAYEE_LOOKUP
 
+/* ─── GLDB Webhook Parser — Payee Lookup (GLDB tool PRD §6.2) ─────────────────
+ *
+ * Deterministic key lookup: the webhook account number is matched EXACTLY against
+ * `channel_account_number` (Channel Account Number, Internal) in the Fiat Account
+ * Mapping Reference Table. Archived + inactive mappings are still returned (the UI
+ * flags them) so Ops sees a mapping exists but is not active. Multiple matches
+ * (same account number, different Account Types) are all returned.
+ */
+export interface PayeeLookupResult {
+  confidence:        'exact' | 'multiple' | 'none'
+  searchedAccountNo: string
+  matches:           ChannelAccount[]
+}
+
+/** GET /payee-lookup?accountNo= — exact match on Channel Account Number (Internal). */
+export function lookupPayee(accountNo: string): Promise<PayeeLookupResult> {
+  const key = accountNo.trim().toLowerCase()
+  const matches = channelAccts.filter(c =>
+    !c.archived && c.channel_account_number.trim().toLowerCase() === key)
+  const confidence = matches.length === 0 ? 'none' : matches.length === 1 ? 'exact' : 'multiple'
+  return tick({ confidence, searchedAccountNo: accountNo.trim(), matches })
+}
+
+// CHUNK_RECONCILIATION
+
+/* ─── Channel–Order Reconciliation (PRD §7.13.7) ─────────────────────────────
+ *
+ * Backs the Reconciliation Report page. `Match` rows are never surfaced here —
+ * they're audit-trail only — so the seed contains discrepancies + resolved items.
+ */
+
+/** Resolved-status filter for the three tabs. */
+export type ReconResolvedFilter = 'open' | 'resolved' | 'all'
+
+export interface ReconResultsFilter {
+  /** Resolved lifecycle filter — drives Open / Resolved / All tabs. */
+  resolved?:        ReconResolvedFilter
+  cycle_id?:        string
+  transaction_id?:  string
+  channel?:         string
+  /** Comma-separated outcome types (multi-select). */
+  outcome?:         string
+  severity?:        ReconSeverity | ''
+  /** Age range in days since first_seen_at. */
+  age_min?:         number
+  age_max?:         number
+  /** Resolved-at range (Resolved History tab). */
+  resolved_from?:   string
+  resolved_to?:     string
+  page?:            number
+  per_page?:        number
+}
+
+/** Whole-days elapsed since an ISO timestamp. */
+function ageInDays(iso: string): number {
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+}
+
+function reconById(id: string): ReconResult | undefined {
+  return reconResults.find(r => r.id === id)
+}
+
+/** GET /reconciliation/results — filtered list (§7.13.7 query conditions). */
+export function listReconResults(filter: ReconResultsFilter = {}): Promise<PaginatedResponse<ReconResult>> {
+  const page    = filter.page ?? 1
+  const perPage = filter.per_page ?? 20
+  const lc = (s?: string) => s?.trim().toLowerCase()
+  const outcomes = filter.outcome ? filter.outcome.split(',') : []
+  const txid     = lc(filter.transaction_id)
+  const cycle    = lc(filter.cycle_id)
+
+  let items = reconResults.slice()
+
+  // Resolved lifecycle
+  if (filter.resolved === 'open')     items = items.filter(r => !r.resolved_at)
+  if (filter.resolved === 'resolved') items = items.filter(r => !!r.resolved_at)
+
+  if (filter.channel)   items = items.filter(r => r.payment_channel === filter.channel)
+  if (filter.severity)  items = items.filter(r => r.severity === filter.severity)
+  if (outcomes.length)  items = items.filter(r => outcomes.includes(r.outcome))
+  if (txid)  items = items.filter(r => (r.transaction_id ?? '').toLowerCase().includes(txid))
+  if (cycle) items = items.filter(r => r.cycle_id.toLowerCase().includes(cycle))
+  if (filter.age_min != null) items = items.filter(r => ageInDays(r.first_seen_at) >= filter.age_min!)
+  if (filter.age_max != null) items = items.filter(r => ageInDays(r.first_seen_at) <= filter.age_max!)
+  if (filter.resolved_from) items = items.filter(r => r.resolved_at && r.resolved_at >= filter.resolved_from!)
+  if (filter.resolved_to)   items = items.filter(r => r.resolved_at && r.resolved_at <= filter.resolved_to! + 'T23:59:59.999Z')
+
+  // Open discrepancies: oldest first (§7.13.7). Resolved/All: most recent activity first.
+  if (filter.resolved === 'open') {
+    items.sort((a, b) => new Date(a.first_seen_at).getTime() - new Date(b.first_seen_at).getTime())
+  } else {
+    items.sort((a, b) => new Date(b.last_seen_at).getTime() - new Date(a.last_seen_at).getTime())
+  }
+
+  const total  = items.length
+  const sliced = items.slice((page - 1) * perPage, page * perPage)
+  return tick({ items: sliced, total, page, per_page: perPage })
+}
+
+/** GET /reconciliation/cycles — per-cycle batch summaries (Cycle Results tab). */
+export function listReconCycles(): Promise<ReconCycle[]> {
+  const sorted = reconCycles.slice().sort((a, b) => new Date(b.ran_at).getTime() - new Date(a.ran_at).getTime())
+  return tick(sorted)
+}
+
+export interface ResolveReconPayload {
+  id: string
+  resolution_note: string
+  correction_order?: string | null
+}
+
+/** POST /reconciliation/results/:id/resolve — Ops resolves a discrepancy (§7.13.7). */
+export function resolveReconResult(payload: ResolveReconPayload): Promise<ReconResult> {
+  const rec = reconById(payload.id)
+  if (!rec) return Promise.reject(new Error('Reconciliation result not found'))
+  if (!payload.resolution_note.trim()) return Promise.reject(new Error('A resolution note is required.'))
+  rec.resolved_at      = new Date().toISOString()
+  rec.resolution_note  = payload.resolution_note.trim()
+  rec.correction_order = payload.correction_order?.trim() || null
+  return tick(rec)
+}
 
 
 

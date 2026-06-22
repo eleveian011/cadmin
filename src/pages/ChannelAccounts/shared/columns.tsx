@@ -73,9 +73,17 @@ export function buildChannelAccountColumns({ hiddenCols, onToggleMapping, action
       ? <span className="type-body text-(--muted) tabular-nums">{row.reference_code}</span>
       : <span className="text-(--subtle)">—</span>,
   }
-  const mcaAccountNumber = {
-    key: 'mca_account_number', header: t('channelAccount.col.mcaAccountNumber'), width: '160px',
-    render: (_, row) => <span className="type-body text-(--text) tabular-nums">{row.mca_account_number}</span>,
+  const userChannelAccountNumber = {
+    key: 'user_channel_account_number', header: t('channelAccount.col.userChannelAccountNumber'), width: '180px',
+    hidden: has('user_channel_account_number'),
+    render: (_, row) => (
+      <span className="flex items-center gap-1.5 min-w-0">
+        <CdsTooltip content={row.user_channel_account_number}>
+          <span className="type-body text-(--text) tabular-nums truncate">{row.user_channel_account_number}</span>
+        </CdsTooltip>
+        <CdsCopyButton text={row.user_channel_account_number} />
+      </span>
+    ),
   }
   const currency = {
     key: 'currency', header: t('channelAccount.col.currency'), width: '90px',
@@ -90,11 +98,6 @@ export function buildChannelAccountColumns({ hiddenCols, onToggleMapping, action
     key: 'participant_code', header: t('channelAccount.col.participantCode'), width: '150px',
     hidden: has('participant_code'),
     render: (_, row) => <span className="type-body text-(--muted)">{row.participant_code ?? '—'}</span>,
-  }
-  const memberId = {
-    key: 'member_id', header: t('channelAccount.col.memberId'), width: '140px',
-    hidden: has('member_id'),
-    render: (_, row) => <span className="type-body text-(--muted)">{row.member_id ?? '—'}</span>,
   }
   const participantStatus = {
     key: 'participant_status', header: t('channelAccount.col.participantStatus'), width: '150px',
@@ -126,8 +129,8 @@ export function buildChannelAccountColumns({ hiddenCols, onToggleMapping, action
     exceptionFlag, mappingStatus,
     channel, accountType,
     participantStatus, memberStatus,
-    channelAccountNumber, referenceCode, mcaAccountNumber,
-    currency, clientName, participantCode, memberId,
+    channelAccountNumber, referenceCode, userChannelAccountNumber,
+    currency, clientName, participantCode,
     actions,
   ]
 }

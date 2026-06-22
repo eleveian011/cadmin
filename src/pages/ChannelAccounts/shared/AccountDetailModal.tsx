@@ -148,7 +148,7 @@ export function AccountDetailModal({ account, open, onClose, t }) {
           <div className="type-body-sm font-semibold text-(--text) mb-2.5">{t('channelAccount.detail.mapping')}</div>
           <CdsDetailList>
             <CdsDetailRow label={t('channelAccount.col.channelAccountNumber')} value={account.channel_account_number} copyText={account.channel_account_number} />
-            <CdsDetailRow label={t('channelAccount.col.mcaAccountNumber')} value={account.mca_account_number} copyText={account.mca_account_number} />
+            <CdsDetailRow label={t('channelAccount.col.userChannelAccountNumber')} value={account.user_channel_account_number} copyText={account.user_channel_account_number} />
             <CdsDetailRow label={t('channelAccount.col.accountType')} value={t(`channelAccount.accountType.${account.account_type}`)} />
             <CdsDetailRow label={t('channelAccount.col.referenceCode')} value={account.reference_code ?? '—'} />
             <CdsDetailRow label={t('channelAccount.col.currency')} value={account.currency} />
@@ -161,7 +161,6 @@ export function AccountDetailModal({ account, open, onClose, t }) {
           <CdsDetailList>
             <CdsDetailRow label={t('channelAccount.col.clientName')} value={account.client_name} />
             <CdsDetailRow label={t('channelAccount.col.participantCode')} value={account.participant_code ?? '—'} />
-            <CdsDetailRow label={t('channelAccount.col.memberId')} value={account.member_id ?? '—'} />
             <CdsDetailRow
               label={t('channelAccount.col.participantStatus')}
               value={<CdsStatusTag tone={STATUS_TONE[account.participant_status]}>{t(`channelAccount.clientStatus.${account.participant_status}`)}</CdsStatusTag>}
