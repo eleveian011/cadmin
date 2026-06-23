@@ -225,8 +225,8 @@ export interface TaskListParams {
   txId?:  string
   /** Ops user id, or 'unassigned' for tasks with no owner. */
   assignedTo?: string
-  /** Wait-time bucket against created_at: '24h' = >24h, '48h' = >48h. */
-  wait?:  '24h' | '48h'
+  /** Wait-time bucket against created_at: 'under24h' = <24h, '24h' = >24h, '48h' = >48h. */
+  wait?:  'under24h' | '24h' | '48h'
   /** Linked-order field searches (matched against the deposit order). */
   senderQ?:     string  // sender name or account
   senderBank?:  string  // sender bank name or SWIFT
@@ -245,10 +245,8 @@ export interface TaskListParams {
 const FYI_TASK_TYPES = ['DEPOSIT_MISSING_FIELDS_FYI', 'DEPOSIT_WEBHOOK_PARSE_FAILURE']
 const isFyi = (t: DepositTask) => FYI_TASK_TYPES.includes(t.taskType)
 
-/** GET /tasks */
-export function listTasks(params: TaskListParams = {}) {
-  const page  = params.page  ?? 1
-  const limit = params.limit ?? 20
+/** Apply all task list filters (view + field filters), returning sorted matches. */
+function filterTasks(params: TaskListParams = {}): DepositTask[] {
   const search = params.q?.toLowerCase()
 
   let items = [...tasks]
@@ -259,7 +257,9 @@ export function listTasks(params: TaskListParams = {}) {
   } else if (params.view === 'mine') {
     items = items.filter(t => !isFyi(t) && ACTIVE_TASK_STATUSES.includes(t.status) && t.assignedTo === ACTOR.id)
   } else {
-    items = items.filter(t => !isFyi(t) && ACTIVE_TASK_STATUSES.includes(t.status))
+    // All Pending — every active task (FYI + everyone else's). My Tasks and FYI
+    // are subsets of this set.
+    items = items.filter(t => ACTIVE_TASK_STATUSES.includes(t.status))
   }
   if (params.type) items = items.filter(t => t.taskType === params.type)
   if (search) items = items.filter(t =>
@@ -280,9 +280,14 @@ export function listTasks(params: TaskListParams = {}) {
 
   // Wait-time bucket against created_at
   if (params.wait) {
-    const minHours = params.wait === '48h' ? 48 : 24
-    const cutoff = Date.now() - minHours * 3_600_000
-    items = items.filter(t => new Date(t.created_at).getTime() <= cutoff)
+    if (params.wait === 'under24h') {
+      const cutoff = Date.now() - 24 * 3_600_000
+      items = items.filter(t => new Date(t.created_at).getTime() > cutoff)
+    } else {
+      const minHours = params.wait === '48h' ? 48 : 24
+      const cutoff = Date.now() - minHours * 3_600_000
+      items = items.filter(t => new Date(t.created_at).getTime() <= cutoff)
+    }
   }
 
   // created_at date range (inclusive)
@@ -330,17 +335,32 @@ export function listTasks(params: TaskListParams = {}) {
     items.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
   }
 
+  return items
+}
+
+/** GET /tasks */
+export function listTasks(params: TaskListParams = {}) {
+  const page  = params.page  ?? 1
+  const limit = params.limit ?? 20
+
+  const items = filterTasks(params)
   const total = items.length
   const sliced = items.slice((page - 1) * limit, page * limit)
-  const badgeCount = tasks.filter(t => !isFyi(t) && ACTIVE_TASK_STATUSES.includes(t.status)).length
+  // All Pending badge — every active task (FYI tasks included; they are a subset).
+  const badgeCount = tasks.filter(t => ACTIVE_TASK_STATUSES.includes(t.status)).length
   return tick({ tasks: sliced, total, page, per_page: limit, badgeCount })
+}
+
+/** All filtered tasks (no pagination) — used by the per-tab export. */
+export function listTasksForExport(params: TaskListParams = {}): DepositTask[] {
+  return filterTasks(params)
 }
 
 /** GET /tasks/badge-count — per-view active counts (badgeCount = action-required, excludes FYI) */
 export function getTaskBadgeCount(): Promise<{ badgeCount: number; mineCount: number; fyiCount: number }> {
   const active = tasks.filter(t => ACTIVE_TASK_STATUSES.includes(t.status))
   return tick({
-    badgeCount: active.filter(t => !isFyi(t)).length,
+    badgeCount: active.length,
     mineCount:  active.filter(t => !isFyi(t) && t.assignedTo === ACTOR.id).length,
     fyiCount:   active.filter(t => isFyi(t)).length,
   })

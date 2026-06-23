@@ -12,7 +12,6 @@ import { OrderFilters, EMPTY_ORDER_FILTERS } from './shared/OrderFilters'
 import { buildOrderColumns, ColumnManageButton } from './shared/columns'
 import { toOrderQuery, hasOrderFilters } from './shared/helpers'
 import { OrderDetailModal } from './shared/OrderDetailModal'
-import { MarkRefundedModal } from './shared/OrderActionModals'
 
 const PER_PAGE_DEFAULT = 20
 
@@ -40,7 +39,6 @@ export default function AbnormalOrders({ embedded = false }: { embedded?: boolea
   const [hiddenCols,  setHiddenCols]  = useState(new Set(DEFAULT_HIDDEN))
 
   const [detailOrder, setDetailOrder] = useState<DepositOrder | null>(null)
-  const [refundOrder, setRefundOrder] = useState<DepositOrder | null>(null)
 
   const onViewTask = useCallback((row: DepositOrder) => {
     if (row.task_center_id) navigate(`/task-center?task=${encodeURIComponent(row.task_center_id)}`)
@@ -64,7 +62,7 @@ export default function AbnormalOrders({ embedded = false }: { embedded?: boolea
   const ALL_COLUMNS: CdsTableColumn<DepositOrder>[] = useMemo(
     () => buildOrderColumns({
       variant: 'abnormal', hiddenCols,
-      onViewTask, onMarkRefunded: setRefundOrder, t,
+      onViewTask, t,
     }),
     [hiddenCols, t, onViewTask],
   )
@@ -131,7 +129,6 @@ export default function AbnormalOrders({ embedded = false }: { embedded?: boolea
       </CdsTableState>
 
       <OrderDetailModal order={detailOrder} open={!!detailOrder} onClose={() => setDetailOrder(null)} t={t} />
-      <MarkRefundedModal order={refundOrder} open={!!refundOrder} onClose={() => setRefundOrder(null)} t={t} />
     </div>
   )
 }

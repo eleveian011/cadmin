@@ -20,6 +20,7 @@ export default function App() {
           <Route path="/channel-accounts"    element={<ChannelAccounts />} />
           <Route path="/gldb-parser"          element={<GldbParser />} />
           <Route path="/reconciliation"       element={<Reconciliation />} />
+          <Route path="/user-roles"           element={<Placeholder title="Manage User Role" />} />
           <Route path="/orders/anomalous"    element={<Navigate to="/orders" replace />} />
           <Route path="/orders/all"          element={<Navigate to="/orders" replace />} />
           <Route path="/assets"              element={<Navigate to="/task-center" replace />} />

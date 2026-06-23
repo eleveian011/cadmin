@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import {
   FileSearch, FileX, CheckCircle2,
   Ban, RotateCcw, ExternalLink, Undo2, Info,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Download,
 } from 'lucide-react'
 import {
   CdsPageHeader, CdsPillTabs,
@@ -24,6 +24,8 @@ import {
   useMarkDepositRefunded, useEligibleAssignees, useReassignTask,
 } from '../../services/hooks'
 import { listAssignees } from '../../services/store'
+import { listTasksForExport } from '../../services/store'
+import { downloadXlsx } from '../../utils/xlsx'
 import type { DepositTask, DepositTaskType, TaskStatus, AccountStatus, MatchPriority } from '../../types/task'
 
 const BREADCRUMBS: BreadcrumbItem[] = [{ label: 'Task Center' }]
@@ -161,7 +163,6 @@ function TaskCard({ task, onSelect, onClaim, onUnclaim, onAssign, claiming, uncl
           <span className="text-(--muted) w-24 shrink-0">Amount</span>
           <span className="text-(--text)">Deposit {task.amountDisplay}</span>
         </div>
-        <p className="type-body text-(--muted) line-clamp-2 mt-2">{t(`taskCenter.taskTypeDesc.${task.taskType}`)}</p>
       </div>
 
       {/* Footer — assignment / claim / assign actions (not shown for FYI tasks) */}
@@ -286,7 +287,7 @@ function titleCase(s: string) {
 
 const MATCH_STRATEGY_LABEL: Record<string, string> = {
   reference_similar: 'Similar reference',
-  va_parent:         'VA parent',
+  va_parent:         'VA Matched, Sub-Account Unresolved',
   name_fuzzy:        'Name match',
   saved_payer:       'Saved payer',
   payment_reference: 'Payment reference',
@@ -569,7 +570,7 @@ function MarkRefundedFields({ orderNo, setOrderNo, date, setDate, notes, setNote
 
 /* ─── Task Drawer ────────────────────────────────────────────── */
 
-function TaskDetailDrawer({ task, onClose, t }) {
+function TaskDetailDrawer({ task, onClose, onClaim, onUnclaim, onAssign, claiming, unclaiming, t }) {
   const [tab,      setTab]      = useState('details')
   const [noteMode, setNoteMode] = useState(false)
   const [noteText, setNoteText] = useState('')
@@ -608,6 +609,13 @@ function TaskDetailDrawer({ task, onClose, t }) {
   const isMine     = task.assignedTo === 'ops_002'
   const isTerminal = task.status === 'COMPLETED' || task.status === 'CANCELLED'
   const canAct     = isMine && !isTerminal
+
+  // Assignment-action availability (mirrors the card footer).
+  const isFyiType  = type === 'DEPOSIT_MISSING_FIELDS_FYI' || type === 'DEPOSIT_WEBHOOK_PARSE_FAILURE'
+  const canClaim   = !isTerminal && !isFyiType && !task.assignedTo
+  const canUnclaim = !isTerminal && !isFyiType && isMine
+  const showAssign = !isTerminal && !isFyiType
+  const showAssignmentBox = !isFyiType
 
   // Mark-as-Refunded eligibility (PRD §7.7.8): unidentified + still in manual_review
   const canMarkRefunded = type === 'DEPOSIT_RECIPIENT_MATCHING'
@@ -681,24 +689,27 @@ function TaskDetailDrawer({ task, onClose, t }) {
   const refundValid = refundNo.trim() && refundDate
 
   /* ── Footer: per-type primary/secondary actions ───────────────── */
+  // The footer is always shown for non-terminal tasks. When the task isn't the
+  // current user's, every action is disabled (visible but inert).
   let footer = null
-  if (canAct) {
+  if (!isTerminal && type !== 'DEPOSIT_WEBHOOK_PARSE_FAILURE') {
+    const disabled = !canAct
     const secondaryNote = (
-      <CdsButton variant="ghost" className="flex-1" onClick={() => setNoteMode(v => !v)}>
+      <CdsButton variant="ghost" className="flex-1" disabled={disabled} onClick={() => setNoteMode(v => !v)}>
         {t('taskCenter.actions.addNote')}
       </CdsButton>
     )
 
     if (type === 'DEPOSIT_RECIPIENT_MATCHING') {
-      // Recipient matching + reject/refund live in the Proceed modal; the drawer
-      // only opens it. Mark as Refunded stays in the drawer footer (when eligible).
+      // Recipient matching + mark-as-refunded live in the Proceed modal; the drawer
+      // only opens it. Mark as Refunded also stays in the drawer footer (when eligible).
       footer = (
         <div className="flex gap-2 w-full">
-          <CdsButton variant="primary" className="flex-1" onClick={() => setProceedOpen(true)}>
-            {t('taskCenter.actions.proceed')}
+          <CdsButton variant="primary" className="flex-1" disabled={disabled} onClick={() => setProceedOpen(true)}>
+            {t('taskCenter.actions.identifyClient')}
           </CdsButton>
           {canMarkRefunded && (
-            <CdsButton variant="ghost" className="flex-1" icon={<Undo2 size={15} />} onClick={() => { resetRefund(); setDialog('markRefunded') }}>
+            <CdsButton variant="ghost" className="flex-1" icon={<Undo2 size={15} />} disabled={disabled} onClick={() => { resetRefund(); setDialog('markRefunded') }}>
               {t('depositOrder.actions.markRefunded')}
             </CdsButton>
           )}
@@ -706,21 +717,21 @@ function TaskDetailDrawer({ task, onClose, t }) {
       )
     } else if (type === 'DEPOSIT_STATUS_EXCEPTION') {
       footer = (
-        <CdsButton variant="primary" className="w-full" icon={<RotateCcw size={15} />} onClick={() => { setDialogInput(''); setDialog('retry') }}>
+        <CdsButton variant="primary" className="w-full" icon={<RotateCcw size={15} />} disabled={disabled} onClick={() => { setDialogInput(''); setDialog('retry') }}>
           {t('taskCenter.actions.retry')}
         </CdsButton>
       )
     } else if (type === 'DEPOSIT_CLASSIFICATION') {
       // Classification operation lives in the Proceed modal; drawer only opens it.
       footer = (
-        <CdsButton variant="primary" className="w-full" onClick={() => setClassifyOpen(true)}>
+        <CdsButton variant="primary" className="w-full" disabled={disabled} onClick={() => setClassifyOpen(true)}>
           {t('taskCenter.actions.proceed')}
         </CdsButton>
       )
     } else if (type === 'DEPOSIT_MISSING_FIELDS_FYI') {
       footer = (
         <div className="flex gap-2 w-full">
-          <CdsButton variant="primary" className="flex-1" disabled={!requiredFieldsFilled} onClick={() => setDialog('fillFields')}>
+          <CdsButton variant="primary" className="flex-1" disabled={disabled || !requiredFieldsFilled} onClick={() => setDialog('fillFields')}>
             {t('taskCenter.actions.saveFields')}
           </CdsButton>
           {secondaryNote}
@@ -729,10 +740,10 @@ function TaskDetailDrawer({ task, onClose, t }) {
     } else if (type === 'DEPOSIT_SCREENING_REVIEW') {
       footer = (
         <div className="flex gap-2 w-full">
-          <CdsButton variant="primary" className="flex-1" onClick={() => { setDialogInput(''); setDialog('approveScreening') }}>
+          <CdsButton variant="primary" className="flex-1" disabled={disabled} onClick={() => { setDialogInput(''); setDialog('approveScreening') }}>
             {t('taskCenter.actions.approveScreening')}
           </CdsButton>
-          <CdsButton variant="ghost" className="flex-1" onClick={() => { setDialogInput(''); setDialog('rejectRefund') }}>
+          <CdsButton variant="ghost" className="flex-1" disabled={disabled} onClick={() => { setDialogInput(''); setDialog('rejectRefund') }}>
             {t('taskCenter.actions.rejectRefund')}
           </CdsButton>
         </div>
@@ -740,8 +751,7 @@ function TaskDetailDrawer({ task, onClose, t }) {
     }
   }
 
-  // Webhook Parse Failure is an FYI task (never claimed), so it falls outside the
-  // canAct gate above. Surface a Close button that drops it straight to terminal.
+  // Webhook Parse Failure is an FYI task (never claimed) anyone may close.
   if (type === 'DEPOSIT_WEBHOOK_PARSE_FAILURE' && !isTerminal) {
     footer = (
       <CdsButton variant="primary" className="w-full" icon={<Ban size={15} />} loading={closeNoAction.isPending}
@@ -791,6 +801,22 @@ function TaskDetailDrawer({ task, onClose, t }) {
                 )}
               </div>
             </div>
+
+            {/* Assignment box — mirrors the card footer (assignee + claim / release / assign) */}
+            {showAssignmentBox && (
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-(--border) bg-(--surface) px-3 py-2.5">
+                <span className="type-body text-(--muted) min-w-0 truncate">
+                  {task.assignedToName
+                    ? <>{t('taskCenter.card.assignedTo')} <span className="font-medium text-(--text)">{task.assignedToName}</span></>
+                    : <span className="text-(--subtle)">{t('taskCenter.card.unassigned')}</span>}
+                </span>
+                <div className="flex shrink-0 items-center gap-3">
+                  {canClaim   && <button type="button" className="type-body font-bold text-(--accent) hover:underline cursor-pointer" disabled={claiming}   onClick={() => onClaim?.(task)}>{t('taskCenter.actions.claim')}</button>}
+                  {canUnclaim && <button type="button" className="type-body font-bold text-(--accent) hover:underline cursor-pointer" disabled={unclaiming} onClick={() => onUnclaim?.(task)}>{t('taskCenter.actions.unclaim')}</button>}
+                  {showAssign && <button type="button" className="type-body font-bold text-(--accent) hover:underline cursor-pointer" onClick={() => onAssign?.(task)}>{task.assignedTo ? t('taskCenter.actions.reassign') : t('taskCenter.actions.assign')}</button>}
+                </div>
+              </div>
+            )}
 
             <div>
               <div className="type-body-lg font-semibold text-(--text) mb-2">{t('taskCenter.drawer.description')}</div>
@@ -895,7 +921,7 @@ function TaskDetailDrawer({ task, onClose, t }) {
         title={t('taskCenter.taskType.DEPOSIT_RECIPIENT_MATCHING')}
         footer={[
           { label: t('taskCenter.actions.confirmRecipient'), variant: 'primary', disabled: !candidate, onClick: () => setDialog('confirmRecipient') },
-          { label: t('taskCenter.actions.rejectRefund'), onClick: () => { setDialogInput(''); setDialog('rejectRefund') } },
+          { label: t('depositOrder.actions.markRefunded'), onClick: () => { setProceedOpen(false); resetRefund(); setDialog('markRefunded') } },
         ]}
       >
         <RecipientMatchPanel task={task} selected={candidate} onSelect={setCandidate} t={t} />
@@ -1128,7 +1154,7 @@ const EMPTY_FILTERS = {
 const FILTER_LABEL = 'type-caption font-semibold text-(--text) mb-1 block'
 const FILTER_CELL = 'flex flex-col min-w-0'
 
-function TaskFilterBoard({ applied, onApply, onReset }) {
+function TaskFilterBoard({ applied, onApply, onReset, onExport, exporting }) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState(applied)
   const [expanded, setExpanded] = useState(false)
@@ -1152,9 +1178,10 @@ function TaskFilterBoard({ applied, onApply, onReset }) {
   ], [t])
 
   const waitOptions = useMemo(() => [
-    { value: '',    label: t('taskCenter.filters.anyWait') },
-    { value: '24h', label: t('taskCenter.filters.over24h') },
-    { value: '48h', label: t('taskCenter.filters.over48h') },
+    { value: '',         label: t('taskCenter.filters.anyWait') },
+    { value: 'under24h', label: t('taskCenter.filters.under24h') },
+    { value: '24h',      label: t('taskCenter.filters.over24h') },
+    { value: '48h',      label: t('taskCenter.filters.over48h') },
   ], [t])
 
   const textCell = (key, label, placeholder) => (
@@ -1224,6 +1251,9 @@ function TaskFilterBoard({ applied, onApply, onReset }) {
           {expanded ? t('taskCenter.filters.collapse') : t('taskCenter.filters.expand')}
         </button>
         <div className="flex items-center gap-2">
+          <CdsButton variant="ghost" size="sm" icon={<Download size={15} />} loading={exporting} onClick={onExport}>
+            {t('common.export')}
+          </CdsButton>
           <CdsButton variant="ghost" size="sm" onClick={() => { setDraft(EMPTY_FILTERS); onReset() }}>
             {t('taskCenter.filters.reset')}
           </CdsButton>
@@ -1319,8 +1349,50 @@ export default function TaskCenter() {
 
   const handleUnclaim = (task: DepositTask) =>
     unclaim.mutateAsync(task.id)
-      .then(() => toast.show(t('taskCenter.toast.unclaimed')))
+      .then(() => {
+        toast.show(t('taskCenter.toast.unclaimed'))
+        // Keep the open drawer in sync so its assignment box reflects the release.
+        setSelected(prev => prev && prev.id === task.id ? { ...prev, assignedTo: null, assignedToName: null, status: 'PENDING' } : prev)
+      })
       .catch(e => toast.show(e?.message || t('taskCenter.toast.unclaimFailed')))
+
+  // Export the current tab's filtered result set to .xlsx (all matches, not just the page).
+  const [exporting, setExporting] = useState(false)
+  const handleExport = () => {
+    setExporting(true)
+    try {
+      const rows = listTasksForExport({ ...queryParams, page: undefined, limit: undefined })
+      const header = [
+        t('taskCenter.export.colTaskId'),
+        t('taskCenter.export.colStatus'),
+        t('taskCenter.export.colTaskName'),
+        t('taskCenter.export.colTaskDesc'),
+        t('taskCenter.export.colAssignedTo'),
+        t('taskCenter.export.colCreatedAt'),
+        t('taskCenter.export.colRelatedOrder'),
+        t('taskCenter.export.colTypeAmount'),
+      ]
+      const body = rows.map(r => [
+        r.id,
+        t(`taskCenter.status.${r.status}`),
+        t(`taskCenter.taskType.${r.taskType}`),
+        t(`taskCenter.taskTypeDesc.${r.taskType}`),
+        r.assignedToName ?? '—',
+        fmtDateTime(r.created_at),
+        r.transactionId,
+        `${t(`taskCenter.taskType.${r.taskType}`)} · ${r.amountDisplay}`,
+      ])
+      if (rows.length === 0) {
+        toast.show(t('taskCenter.export.empty'))
+        return
+      }
+      const stamp = fmtDay(new Date())
+      downloadXlsx(`task_center_${viewTab}_${stamp}.xlsx`, [header, ...body])
+      toast.show(t('taskCenter.export.ready'))
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const pillTabs = [
     { value: 'active',    label: `${t('taskCenter.tabs.active')}${badgeCount ? ` (${badgeCount})` : ''}` },
@@ -1335,7 +1407,7 @@ export default function TaskCenter() {
 
       <CdsPillTabs value={viewTab} onChange={handleTabChange} items={pillTabs} />
 
-      <TaskFilterBoard applied={filters} onApply={handleApply} onReset={handleReset} />
+      <TaskFilterBoard applied={filters} onApply={handleApply} onReset={handleReset} onExport={handleExport} exporting={exporting} />
 
       {/* Results summary */}
       <div className="flex items-center gap-2 type-body text-(--muted) -mt-2">
@@ -1399,7 +1471,16 @@ export default function TaskCenter() {
       )}
 
       {selected && (
-        <TaskDetailDrawer task={selected} onClose={closeDrawer} t={t} />
+        <TaskDetailDrawer
+          task={selected}
+          onClose={closeDrawer}
+          onClaim={handleClaim}
+          onUnclaim={handleUnclaim}
+          onAssign={setAssignTask}
+          claiming={claim.isPending}
+          unclaiming={unclaim.isPending}
+          t={t}
+        />
       )}
 
       {assignTask && (
@@ -1407,7 +1488,12 @@ export default function TaskCenter() {
           task={assignTask}
           open={!!assignTask}
           onClose={() => setAssignTask(null)}
-          onAssigned={() => {}}
+          onAssigned={(assignee) => {
+            // Reflect the (re)assignment in an open drawer for the same task.
+            setSelected(prev => prev && prev.id === assignTask.id
+              ? { ...prev, assignedTo: assignee.id, assignedToName: assignee.name, status: prev.status === 'PENDING' ? 'IN_PROGRESS' : prev.status }
+              : prev)
+          }}
         />
       )}
     </div>

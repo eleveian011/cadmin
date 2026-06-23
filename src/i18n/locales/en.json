@@ -41,6 +41,7 @@
       "addNote": "Add Note",
       "saveNote": "Save Note",
       "proceed": "Proceed",
+      "identifyClient": "Identification Client",
       "confirmRecipient": "Confirm Recipient & Proceed",
       "rejectRefund": "Reject / Refund",
       "retry": "Retry Crediting",
@@ -122,16 +123,17 @@
       "unassigned": "Unassigned",
       "waitTime": "Wait Time",
       "anyWait": "Any duration",
+      "under24h": "Within 24h",
       "over24h": "More than 24h",
       "over48h": "More than 48h",
       "senderNameAccount": "Sender Name or Account",
       "senderPlaceholder": "Search sender…",
       "senderBank": "Sender Bank",
-      "senderBankPlaceholder": "Bank name or SWIFT…",
+      "senderBankPlaceholder": "Bank Name",
       "recipientNameAccount": "Recipient Name or Account",
       "recipientPlaceholder": "Search recipient…",
       "recipientBank": "Recipient Bank",
-      "recipientBankPlaceholder": "Recipient bank name…",
+      "recipientBankPlaceholder": "Bank Name",
       "client": "Client Name or Participant Code",
       "clientPlaceholder": "Search client…",
       "timeRange": "Time Range",
@@ -158,10 +160,10 @@
       "DEPOSIT_WEBHOOK_PARSE_FAILURE": "Webhook payload could not be parsed"
     },
     "status": {
-      "PENDING": "Pending",
-      "IN_PROGRESS": "In Progress",
-      "COMPLETED": "Completed",
-      "CANCELLED": "Cancelled"
+      "PENDING": "Task Pending",
+      "IN_PROGRESS": "Task In Progress",
+      "COMPLETED": "Task Completed",
+      "CANCELLED": "Task Cancelled"
     },
     "priority": {
       "highest": "Highest",
@@ -216,7 +218,19 @@
     "emptyActive": "No pending tasks",
     "emptyActiveDesc": "All deposit tasks are resolved.",
     "emptyCompleted": "No tasks in history",
-    "emptyCompletedDesc": "Completed and cancelled tasks will appear here."
+    "emptyCompletedDesc": "Completed and cancelled tasks will appear here.",
+    "export": {
+      "empty": "No tasks to export for the current filters.",
+      "ready": "Export ready",
+      "colTaskId": "Task ID",
+      "colStatus": "Status",
+      "colTaskName": "Task Name",
+      "colTaskDesc": "Task Description",
+      "colAssignedTo": "Assigned User",
+      "colCreatedAt": "Create Time",
+      "colRelatedOrder": "Related Order",
+      "colTypeAmount": "Type & Amount"
+    }
   },
   "depositOrder": {
     "pageTitle": {

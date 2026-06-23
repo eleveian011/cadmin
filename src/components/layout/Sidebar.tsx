@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { NavLink } from 'react-router-dom'
 import {
   SwatchBook,
-  ClipboardList, ReceiptText, Landmark, FileJson, Scale,
+  ClipboardList, ReceiptText, Landmark, FileJson, Scale, Users,
   MoreHorizontal, Sun, Moon, LogOut, Menu,
   type LucideIcon,
 } from 'lucide-react'
@@ -18,16 +18,42 @@ interface LeafNavItem {
   label: string
 }
 
-type NavItem = LeafNavItem
+interface NavSection {
+  header: string
+  items:  LeafNavItem[]
+}
 
-const NAV_ITEMS: NavItem[] = [
-  { to: '/task-center',     Icon: ClipboardList, label: 'Task Center' },
-  { to: '/orders',          Icon: ReceiptText,   label: 'Order Management' },
-  { to: '/channel-accounts', Icon: Landmark,     label: 'Fiat Account Mapping' },
-  { to: '/reconciliation',  Icon: Scale,         label: 'Reconciliation Report' },
-  { to: '/gldb-parser',     Icon: FileJson,      label: 'GLDB Webhook Parser' },
-  { to: '/cds-guideline',   Icon: SwatchBook,    label: 'CDS Guideline' },
+const NAV_SECTIONS: NavSection[] = [
+  {
+    header: 'Task',
+    items: [
+      { to: '/task-center', Icon: ClipboardList, label: 'Task Center' },
+    ],
+  },
+  {
+    header: 'Order and Account',
+    items: [
+      { to: '/orders',           Icon: ReceiptText, label: 'Order Management' },
+      { to: '/channel-accounts', Icon: Landmark,    label: 'Fiat Account Mapping' },
+      { to: '/reconciliation',   Icon: Scale,       label: 'Reconciliation Report' },
+      { to: '/gldb-parser',      Icon: FileJson,    label: 'GLDB Webhook Parser' },
+    ],
+  },
+  {
+    header: 'User and Role',
+    items: [
+      { to: '/user-roles', Icon: Users, label: 'Manage User Role' },
+    ],
+  },
+  {
+    header: 'Utility',
+    items: [
+      { to: '/cds-guideline', Icon: SwatchBook, label: 'CDS Guideline' },
+    ],
+  },
 ]
+
+const SECTION_HEADER = 'px-4 pt-4 pb-1.5 type-caption font-bold uppercase tracking-wider text-(--subtle)'
 
 const ROW = [
   'flex w-full items-center gap-2 px-4 py-2',
@@ -165,25 +191,30 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onClose,
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-none">
         <nav className="py-2.5">
-          {NAV_ITEMS.map((item) => {
-            const badge = item.to === '/task-center' ? taskCount : 0
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={() => onClose?.()}
-                className={({ isActive }) => isActive ? ROW_ACTIVE : ROW_DEFAULT}
-              >
-                <item.Icon size={15} className="shrink-0 opacity-80" />
-                <span className="flex-1 truncate">{item.label}</span>
-                {badge > 0 && (
-                  <span className="shrink-0 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-(--danger) text-(--on-primary) type-caption font-bold tabular-nums">
-                    {badge}
-                  </span>
-                )}
-              </NavLink>
-            )
-          })}
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.header}>
+              <div className={SECTION_HEADER}>{section.header}</div>
+              {section.items.map((item) => {
+                const badge = item.to === '/task-center' ? taskCount : 0
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => onClose?.()}
+                    className={({ isActive }) => isActive ? ROW_ACTIVE : ROW_DEFAULT}
+                  >
+                    <item.Icon size={15} className="shrink-0 opacity-80" />
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {badge > 0 && (
+                      <span className="shrink-0 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-(--danger) text-(--on-primary) type-caption font-bold tabular-nums">
+                        {badge}
+                      </span>
+                    )}
+                  </NavLink>
+                )
+              })}
+            </div>
+          ))}
         </nav>
       </div>
       <div className="shrink-0">

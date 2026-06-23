@@ -98,7 +98,7 @@ function AgeingBadge({ createdAt }) {
  * variant 'abnormal' inserts Ageing + Anomaly columns and frozen-right actions.
  * `hiddenCols` controls which optional columns are hidden; handlers wire row actions.
  */
-export function buildOrderColumns({ variant, hiddenCols, onViewTask, onMarkRefunded, t }) {
+export function buildOrderColumns({ variant, hiddenCols, onViewTask, t }) {
   const h = (k) => hiddenCols.has(k)
   // Plain text cell helper.
   const txt = (key, label, width, accessor, opts = {}) => ({
@@ -258,7 +258,7 @@ export function buildOrderColumns({ variant, hiddenCols, onViewTask, onMarkRefun
   const actions = {
     key: '_actions', header: '', width: '1%', frozen: 'right',
     render: (_, row) => (
-      <RowActions row={row} onViewTask={onViewTask} onMarkRefunded={onMarkRefunded} t={t} />
+      <RowActions row={row} onViewTask={onViewTask} t={t} />
     ),
   }
 
