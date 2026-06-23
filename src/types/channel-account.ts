@@ -27,13 +27,6 @@ export type MappingStatus = 'active' | 'inactive'
  */
 export type ClientStatus = 'active' | 'initial' | 'suspended' | 'closed'
 
-/** Beneficiary (account holder) info — top section of the bank detail card. */
-export interface BeneficiaryInfo {
-  name:    string
-  address: string
-  country: string
-}
-
 /** Receiving bank details. */
 export interface BankDetails {
   bank_name:      string
@@ -63,29 +56,28 @@ export interface ChannelAccountHistoryEntry {
 export interface ChannelAccount {
   id: string
 
-  /* ── Mapping keys (uniqueness: channel + channel_account_number + account_type) ── */
+  /* ── Mapping keys (uniqueness: channel + user_channel_account_number + account_type) ── */
   payment_channel:        ChannelAccountChannel
-  /** Channel Account Number (Internal) — internal mapping key. */
+  /** Channel Account Number (Internal) — GLDB-only internal identifier; optional. */
   channel_account_number: string
-  /** User Channel Account Number — user-facing external channel account number. */
+  /** Channel Account Number — user-facing external channel account number. */
   user_channel_account_number: string
   account_type:           AccountType
 
   /** System-generated; not editable via Admin UI or bulk upload. Null for Named VAs. */
   reference_code:         string | null
-  currency:               string
+  /** Account currencies — one mapping may carry several (multi-select). */
+  currency:               string[]
 
   /* ── Client identity — auto-populated via CAMP lookup on Participant Code, read-only after creation ── */
   client_name:            string
   participant_code:       string | null
   participant_status:     ClientStatus
-  member_status:          ClientStatus
 
-  /** Active / Inactive toggle — always editable. */
+  /** Channel Account Status — Active / Inactive toggle, always editable. */
   mapping_status:         MappingStatus
 
-  /* ── Bank information (account-holder + receiving bank + optional intermediary) ── */
-  beneficiary:            BeneficiaryInfo
+  /* ── Bank information (receiving bank + optional intermediary) ── */
   bank_details:           BankDetails
   intermediary_bank:      IntermediaryBank | null
 

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ExternalLink, ArrowRight } from 'lucide-react'
 import {
-  CdsModal, CdsBadge, CdsInput, CdsTextarea, useToast,
+  CdsModal, CdsBadge, CdsButton, CdsInput, CdsTextarea, useToast,
 } from '../../../components/cds'
 import { useResolveReconResult } from '../../../services/hooks'
 import {
@@ -78,9 +78,9 @@ export function ReconDetailModal({ result, open, onClose, onResolve, t }) {
             <span className="type-h4 font-semibold text-(--text) tabular-nums">{result.transaction_id ?? '—'}</span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <CdsBadge tone={CHANNEL_TONE[result.payment_channel] ?? 'neutral'}>{result.payment_channel}</CdsBadge>
-            <CdsBadge tone={SEVERITY_TONE[result.severity]}>{t(`recon.outcome.${result.outcome}`)}</CdsBadge>
-            <CdsBadge tone={SEVERITY_TONE[result.severity]}>{t(`recon.severity.${result.severity}`)}</CdsBadge>
+            <CdsBadge tone={CHANNEL_TONE[result.payment_channel] ?? 'neutral'} soft>{result.payment_channel}</CdsBadge>
+            <CdsBadge tone={SEVERITY_TONE[result.severity]} soft>{t(`recon.outcome.${result.outcome}`)}</CdsBadge>
+            <CdsBadge tone={SEVERITY_TONE[result.severity]} soft>{t(`recon.severity.${result.severity}`)}</CdsBadge>
           </div>
         </div>
 
@@ -98,6 +98,10 @@ export function ReconDetailModal({ result, open, onClose, onResolve, t }) {
 
         {/* Meta */}
         <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+          <div className="flex justify-between border-b border-(--border) py-1.5">
+            <span className="type-caption text-(--muted)">{t('recon.col.reconType')}</span>
+            <span className="type-body text-(--text)">{t(`recon.reconType.${result.recon_type}`)}</span>
+          </div>
           <div className="flex justify-between border-b border-(--border) py-1.5">
             <span className="type-caption text-(--muted)">{t('recon.col.cycleId')}</span>
             <span className="type-body text-(--text) tabular-nums">{result.cycle_id}</span>
@@ -140,6 +144,9 @@ export function ReconDetailModal({ result, open, onClose, onResolve, t }) {
           <div className="rounded-lg border border-(--success-border) bg-(--success-bg) p-4 flex flex-col gap-1.5">
             <span className="type-body-sm font-semibold text-(--success-text)">{t('recon.detail.resolvedTitle')}</span>
             <span className="type-body text-(--text)">{result.resolution_note}</span>
+            {result.resolved_by && (
+              <span className="type-caption text-(--muted)">{t('recon.col.resolvedBy')}: {result.resolved_by}</span>
+            )}
             {result.correction_order && (
               <span className="type-caption text-(--muted)">{t('recon.resolve.correctionOrder')}: {result.correction_order}</span>
             )}

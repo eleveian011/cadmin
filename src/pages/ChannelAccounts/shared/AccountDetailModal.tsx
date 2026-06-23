@@ -40,7 +40,6 @@ function InfoCard({ title, children }) {
 function ExceptionBanner({ account, t }) {
   const blocking = []
   if (isExceptionStatus(account.participant_status)) blocking.push({ key: 'participant', status: account.participant_status })
-  if (isExceptionStatus(account.member_status))      blocking.push({ key: 'member',      status: account.member_status })
   if (!blocking.length) return null
 
   return (
@@ -112,7 +111,7 @@ function AuditTimeline({ history, t }) {
 export function AccountDetailModal({ account, open, onClose, t }) {
   if (!account) return null
 
-  const exception = hasStatusException(account.participant_status, account.member_status)
+  const exception = hasStatusException(account.participant_status)
   const ruleActive = account.mapping_status === 'active' && !exception
 
   return (
@@ -143,15 +142,22 @@ export function AccountDetailModal({ account, open, onClose, t }) {
             : <span className="flex items-center gap-1.5 type-body-sm text-(--muted)"><AlertTriangle size={14} /> {t('channelAccount.detail.ruleBlocked')}</span>}
         </div>
 
-        {/* Mapping fields */}
+        {/* Mapping fields + bank details (bank info is part of the channel account) */}
         <div>
           <div className="type-body-sm font-semibold text-(--text) mb-2.5">{t('channelAccount.detail.mapping')}</div>
           <CdsDetailList>
-            <CdsDetailRow label={t('channelAccount.col.channelAccountNumber')} value={account.channel_account_number} copyText={account.channel_account_number} />
             <CdsDetailRow label={t('channelAccount.col.userChannelAccountNumber')} value={account.user_channel_account_number} copyText={account.user_channel_account_number} />
+            {account.channel_account_number && (
+              <CdsDetailRow label={t('channelAccount.col.channelAccountNumber')} value={account.channel_account_number} copyText={account.channel_account_number} />
+            )}
             <CdsDetailRow label={t('channelAccount.col.accountType')} value={t(`channelAccount.accountType.${account.account_type}`)} />
             <CdsDetailRow label={t('channelAccount.col.referenceCode')} value={account.reference_code ?? '—'} />
-            <CdsDetailRow label={t('channelAccount.col.currency')} value={account.currency} />
+            <CdsDetailRow label={t('channelAccount.col.currency')} value={account.currency.join(', ')} />
+            <CdsDetailRow label={t('channelAccount.bank.bankName')} value={account.bank_details.bank_name} />
+            <CdsDetailRow label={t('channelAccount.bank.accountNumber')} value={account.bank_details.account_number} copyText={account.bank_details.account_number} />
+            <CdsDetailRow label={t('channelAccount.bank.swiftCode')} value={account.bank_details.swift_code} />
+            <CdsDetailRow label={t('channelAccount.bank.countryCode')} value={account.bank_details.country_code} />
+            <CdsDetailRow label={t('channelAccount.bank.bankAddress')} value={account.bank_details.bank_address} />
           </CdsDetailList>
         </div>
 
@@ -162,30 +168,11 @@ export function AccountDetailModal({ account, open, onClose, t }) {
             <CdsDetailRow label={t('channelAccount.col.clientName')} value={account.client_name} />
             <CdsDetailRow label={t('channelAccount.col.participantCode')} value={account.participant_code ?? '—'} />
             <CdsDetailRow
-              label={t('channelAccount.col.participantStatus')}
+              label={t('channelAccount.col.clientStatusCol')}
               value={<CdsStatusTag tone={STATUS_TONE[account.participant_status]}>{t(`channelAccount.clientStatus.${account.participant_status}`)}</CdsStatusTag>}
-            />
-            <CdsDetailRow
-              label={t('channelAccount.col.memberStatus')}
-              value={<CdsStatusTag tone={STATUS_TONE[account.member_status]}>{t(`channelAccount.clientStatus.${account.member_status}`)}</CdsStatusTag>}
             />
           </CdsDetailList>
         </div>
-
-        {/* Bank information sections (matches the provided DOM structure) */}
-        <InfoCard title={t('channelAccount.bank.beneficiary')}>
-          <InfoRow label={t('channelAccount.bank.beneficiaryName')} value={account.beneficiary.name} />
-          <InfoRow label={t('channelAccount.bank.beneficiaryAddress')} value={account.beneficiary.address} />
-          <InfoRow label={t('channelAccount.bank.beneficiaryCountry')} value={account.beneficiary.country} />
-        </InfoCard>
-
-        <InfoCard title={t('channelAccount.bank.bankDetails')}>
-          <InfoRow label={t('channelAccount.bank.bankName')} value={account.bank_details.bank_name} />
-          <InfoRow label={t('channelAccount.bank.accountNumber')} value={account.bank_details.account_number} />
-          <InfoRow label={t('channelAccount.bank.swiftCode')} value={account.bank_details.swift_code} />
-          <InfoRow label={t('channelAccount.bank.countryCode')} value={account.bank_details.country_code} />
-          <InfoRow label={t('channelAccount.bank.bankAddress')} value={account.bank_details.bank_address} />
-        </InfoCard>
 
         {account.intermediary_bank && (
           <InfoCard title={t('channelAccount.bank.intermediary')}>

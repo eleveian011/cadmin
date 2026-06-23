@@ -8,7 +8,7 @@ import {
 import type { BreadcrumbItem } from '../../components/cds'
 import { usePayeeLookup } from '../../services/hooks'
 import { parseWebhook, SAMPLE_WEBHOOK } from './shared/parse'
-import { buildSummaryText } from './shared/summary'
+import { buildSummaryRows, summaryRowsToText } from './shared/summary'
 import { PayeeSection } from './shared/PayeeResult'
 
 const BREADCRUMBS: BreadcrumbItem[] = [{ label: 'GLDB Webhook Parser' }]
@@ -87,19 +87,19 @@ export default function GldbParser() {
   }
   const handleClear = () => { setInput(''); setParse({ ok: false, error: 'empty' }) }
 
-  const summaryText = useMemo(() => {
-    if (!parse.ok || !parse.payload) return ''
-    return buildSummaryText(parse.payload, lookup?.matches ?? [])
-  }, [parse, lookup])
+  const summaryRows = useMemo(() => {
+    if (!parse.ok || !parse.payload) return []
+    return buildSummaryRows(parse.payload, lookup?.matches ?? [], t)
+  }, [parse, lookup, t])
 
   const handleCopy = useCallback(() => {
-    if (!summaryText) return
-    navigator.clipboard.writeText(summaryText).then(() => {
+    if (!summaryRows.length) return
+    navigator.clipboard.writeText(summaryRowsToText(summaryRows)).then(() => {
       setCopied(true)
       toast.show(t('gldbParser.summary.copied'))
       setTimeout(() => setCopied(false), 1500)
     }).catch(() => toast.show(t('gldbParser.summary.copyFailed')))
-  }, [summaryText, toast, t])
+  }, [summaryRows, toast, t])
 
   const showResults = parse.ok && !!parse.fields
 
@@ -170,9 +170,17 @@ export default function GldbParser() {
                     {copied ? t('gldbParser.summary.copiedShort') : t('gldbParser.summary.copy')}
                   </button>
                 </div>
-                <pre className="rounded-lg border border-(--border) bg-(--fill) p-4 overflow-x-auto type-body-sm text-(--text) font-mono whitespace-pre-wrap wrap-break-word">
-                  {summaryText}
-                </pre>
+                <div className="rounded-lg border border-(--border) bg-(--surface) px-4 py-1">
+                  {summaryRows.map((r, i) => (
+                    <div key={i} className="flex flex-col gap-0.5 py-2 border-b border-(--border) last:border-b-0">
+                      <span className="type-caption text-(--muted)">{r.label}</span>
+                      <span className="flex items-center justify-between gap-1.5 min-w-0">
+                        <span className="type-body text-(--text) wrap-break-word min-w-0">{r.value}</span>
+                        <CdsCopyButton text={`${r.label}: ${r.value}`} className="shrink-0" />
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </section>
             </>
           )}

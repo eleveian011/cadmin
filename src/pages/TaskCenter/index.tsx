@@ -315,9 +315,9 @@ function DepositDetailsPanel({ order, loading, t }) {
       <CdsDetailRow label={t('taskCenter.deposit.transactionId')} value={order.transaction_id} copyText={order.transaction_id} />
       <CdsDetailRow label={t('taskCenter.deposit.channel')}       value={order.payment_channel} />
       <CdsDetailRow label={t('taskCenter.deposit.amount')}        value={`${fmtAmount(order.amount_minor)} ${order.currency}`} />
-      <CdsDetailRow label={t('taskCenter.deposit.senderName')}    value={dash(order.sender_name)} />
-      <CdsDetailRow label={t('taskCenter.deposit.senderAccount')} value={dash(order.sender_account)} />
-      <CdsDetailRow label={t('taskCenter.deposit.senderBank')}    value={dash(order.sender_bank_name)} />
+      <CdsDetailRow label={t('taskCenter.deposit.senderName')}    value={dash(order.counterparty_name)} />
+      <CdsDetailRow label={t('taskCenter.deposit.senderAccount')} value={dash(order.counterparty_account_no)} />
+      <CdsDetailRow label={t('taskCenter.deposit.senderBank')}    value={dash(order.counterparty_bank_name)} />
       <CdsDetailRow label={t('taskCenter.deposit.referenceCode')} value={dash(order.reference_code)} />
       <CdsDetailRow label={t('taskCenter.deposit.valueDate')}     value={dash(order.value_date)} />
     </CdsDetailList>
@@ -611,7 +611,7 @@ function TaskDetailDrawer({ task, onClose, t }) {
 
   // Mark-as-Refunded eligibility (PRD §7.7.8): unidentified + still in manual_review
   const canMarkRefunded = type === 'DEPOSIT_RECIPIENT_MATCHING'
-    && order?.anomalous_reason === 'unidentified'
+    && order?.internal_reason === 'unidentified'
     && order?.status === 'processing.manual_review'
 
   const done = (msg) => { toast.show(msg); setDialog(null); setProceedOpen(false); setClassifyOpen(false); onClose() }

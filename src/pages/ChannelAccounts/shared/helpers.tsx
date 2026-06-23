@@ -30,15 +30,16 @@ export const CHANNEL_OPTIONS: ChannelAccountChannel[] = ['GLDB', 'SGB', 'Transfe
 export const ACCOUNT_TYPE_OPTIONS = ['fiat', 'investment_fiat']
 export const CLIENT_STATUS_OPTIONS: ClientStatus[] = ['active', 'initial', 'suspended', 'closed']
 export const MAPPING_STATUS_OPTIONS = ['active', 'inactive']
+export const CURRENCY_OPTIONS = ['SGD', 'USD', 'EUR', 'GBP', 'HKD', 'JPY', 'CNH', 'IDR', 'MYR', 'AUD']
 
 /** A status is an exception (blocks auto-credit) whenever it is not `active`. */
 export function isExceptionStatus(s: ClientStatus): boolean {
   return s !== 'active'
 }
 
-/** Row has a status exception when either participant or member status is non-active. */
-export function hasStatusException(participant: ClientStatus, member: ClientStatus): boolean {
-  return isExceptionStatus(participant) || isExceptionStatus(member)
+/** Row has a status exception when participant status is non-active. */
+export function hasStatusException(participant: ClientStatus, _member?: ClientStatus): boolean {
+  return isExceptionStatus(participant)
 }
 
 /** Single-line date+time in SGT. */
@@ -68,7 +69,7 @@ export function fmtDateParts(iso: string | null): { date: string; time: string }
 export const EMPTY_ACCOUNT_FILTERS = {
   channel: '', account_type: '', channel_account: '', reference_code: '',
   user_channel_account: '', currency: '', client_q: '',
-  participant_status: '', member_status: '',
+  participant_status: '', mapping_status: '',
 }
 
 /** Map a filter-board object → ChannelAccountsFilter query params (undefined = unset). */
@@ -82,7 +83,7 @@ export function toAccountQuery(f: any) {
     currency:             f.currency || undefined,
     client_q:             f.client_q?.trim() || undefined,
     participant_status:   f.participant_status || undefined,
-    member_status:        f.member_status || undefined,
+    mapping_status:       f.mapping_status || undefined,
   }
 }
 

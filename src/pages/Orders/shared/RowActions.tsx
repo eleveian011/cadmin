@@ -10,7 +10,7 @@ import { CdsButton } from '../../../components/cds'
  */
 export function RowActions({ row, onViewTask, onMarkRefunded, t }) {
   const canViewTask = !!row.task_center_id
-  const canRefund = row.anomalous_reason === 'unidentified' && row.status === 'processing.manual_review'
+  const canRefund = row.internal_reason === 'unidentified' && row.status === 'processing.manual_review'
   const linkCls = 'type-body font-bold text-(--accent) hover:text-(--accent-hover) cursor-pointer transition-colors whitespace-nowrap'
 
   return (

@@ -69,6 +69,7 @@ export interface DepositOrdersFilter {
   reason?:    string
   currency?:  string
   txid?:      string
+  channel_txid?: string
   sender?:    string
   sender_bank?: string
   beneficiary?: string
@@ -95,6 +96,7 @@ export function listDepositOrders(filter: DepositOrdersFilter = {}): Promise<Pag
   const currencies = filter.currency ? filter.currency.split(',') : []
   const orderTypes = filter.order_type ? filter.order_type.split(',') : []
   const txid   = lc(filter.txid)
+  const channelTxid = lc(filter.channel_txid)
   const sender = lc(filter.sender)
   const sBank  = lc(filter.sender_bank)
   const bene   = lc(filter.beneficiary)
@@ -106,8 +108,8 @@ export function listDepositOrders(filter: DepositOrdersFilter = {}): Promise<Pag
 
   if (filter.anomalous) {
     items = items.filter(d =>
-      d.anomalous_reason &&
-      ANOMALOUS_REASONS.includes(d.anomalous_reason) &&
+      d.internal_reason &&
+      ANOMALOUS_REASONS.includes(d.internal_reason) &&
       PENDING_ANOMALOUS_STATUSES.includes(d.status)
     )
     items.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
@@ -115,8 +117,8 @@ export function listDepositOrders(filter: DepositOrdersFilter = {}): Promise<Pag
   if (orderTypes.length) items = items.filter(d => orderTypes.includes(d.order_type))
   if (channels.length) items = items.filter(d => channels.includes(d.payment_channel))
   if (statuses.length) items = items.filter(d => statuses.includes(d.status))
-  if (parties.length)  items = items.filter(d => parties.includes(d.party_classification))
-  if (reasons.length)  items = items.filter(d => d.anomalous_reason && reasons.includes(d.anomalous_reason))
+  if (parties.length)  items = items.filter(d => parties.includes(d.classification))
+  if (reasons.length)  items = items.filter(d => d.internal_reason && reasons.includes(d.internal_reason))
   if (currencies.length) items = items.filter(d => currencies.includes(d.currency))
   if (filter.amount_min != null) items = items.filter(d => d.amount_minor >= filter.amount_min * 100)
   if (filter.amount_max != null) items = items.filter(d => d.amount_minor <= filter.amount_max * 100)
@@ -129,22 +131,23 @@ export function listDepositOrders(filter: DepositOrdersFilter = {}): Promise<Pag
     items = items.filter(d => new Date(d.created_at).getTime() <= to)
   }
   if (txid)   items = items.filter(d => d.transaction_id.toLowerCase().includes(txid))
+  if (channelTxid) items = items.filter(d => (d.channel_transaction_id ?? '').toLowerCase().includes(channelTxid))
   if (sender) items = items.filter(d =>
-    (d.sender_name ?? '').toLowerCase().includes(sender) ||
-    (d.sender_account ?? '').toLowerCase().includes(sender))
+    (d.counterparty_name ?? '').toLowerCase().includes(sender) ||
+    (d.counterparty_account_no ?? '').toLowerCase().includes(sender))
   if (sBank) items = items.filter(d =>
-    (d.sender_bank_name ?? '').toLowerCase().includes(sBank) ||
-    (d.sender_bank_swift ?? '').toLowerCase().includes(sBank))
+    (d.counterparty_bank_name ?? '').toLowerCase().includes(sBank) ||
+    (d.counterparty_bank_swift_bic ?? '').toLowerCase().includes(sBank))
   if (bene) items = items.filter(d =>
     (d.beneficiary_name ?? '').toLowerCase().includes(bene) ||
-    (d.beneficiary_account ?? '').toLowerCase().includes(bene))
+    (d.beneficiary_account_no ?? '').toLowerCase().includes(bene))
   if (bBank) items = items.filter(d => (d.beneficiary_bank_name ?? '').toLowerCase().includes(bBank))
   if (client) items = items.filter(d =>
     (d.beneficiary_name ?? '').toLowerCase().includes(client) ||
-    (d.beneficiary_code ?? '').toLowerCase().includes(client))
+    (d.participant_code ?? '').toLowerCase().includes(client))
   if (q) items = items.filter(d =>
     d.transaction_id.toLowerCase().includes(q) ||
-    (d.sender_name ?? '').toLowerCase().includes(q) ||
+    (d.counterparty_name ?? '').toLowerCase().includes(q) ||
     (d.beneficiary_name ?? '').toLowerCase().includes(q) ||
     (d.reference_code ?? '').toLowerCase().includes(q))
 
@@ -171,7 +174,7 @@ export interface MarkRefundedPayload {
 export function markDepositRefunded({ id, refund_order_number, refund_date, refund_notes }: MarkRefundedPayload): Promise<DepositOrder> {
   const order = orderById(id)
   if (!order) return Promise.reject(new Error('Order not found'))
-  if (!(order.anomalous_reason === 'unidentified' && order.status === 'processing.manual_review')) {
+  if (!(order.internal_reason === 'unidentified' && order.status === 'processing.manual_review')) {
     return Promise.reject(new Error('Order is not eligible for manual refund marking'))
   }
   const now = new Date().toISOString()
@@ -305,18 +308,18 @@ export function listTasks(params: TaskListParams = {}) {
       const o = t.depositOrderId ? orderById(t.depositOrderId) : undefined
       if (!o) return false
       if (senderQ && !(
-        (o.sender_name ?? '').toLowerCase().includes(senderQ) ||
-        (o.sender_account ?? '').toLowerCase().includes(senderQ))) return false
+        (o.counterparty_name ?? '').toLowerCase().includes(senderQ) ||
+        (o.counterparty_account_no ?? '').toLowerCase().includes(senderQ))) return false
       if (senderBank && !(
-        (o.sender_bank_name ?? '').toLowerCase().includes(senderBank) ||
-        (o.sender_bank_swift ?? '').toLowerCase().includes(senderBank))) return false
+        (o.counterparty_bank_name ?? '').toLowerCase().includes(senderBank) ||
+        (o.counterparty_bank_swift_bic ?? '').toLowerCase().includes(senderBank))) return false
       if (recipientQ && !(
         (o.beneficiary_name ?? '').toLowerCase().includes(recipientQ) ||
-        (o.beneficiary_account ?? '').toLowerCase().includes(recipientQ))) return false
+        (o.beneficiary_account_no ?? '').toLowerCase().includes(recipientQ))) return false
       if (recipientBank && !(o.beneficiary_bank_name ?? '').toLowerCase().includes(recipientBank)) return false
       if (clientQ && !(
         (o.beneficiary_name ?? '').toLowerCase().includes(clientQ) ||
-        (o.beneficiary_code ?? '').toLowerCase().includes(clientQ))) return false
+        (o.participant_code ?? '').toLowerCase().includes(clientQ))) return false
       return true
     })
   }
@@ -401,11 +404,11 @@ export function confirmRecipient({ id, participant_code, client_name, account_nu
   const order = orderById(task.depositOrderId)
   if (order) {
     order.beneficiary_name     = client_name
-    order.beneficiary_code     = participant_code
-    order.beneficiary_account  = account_number
-    order.party_classification = order.party_classification === 'unclassified' ? '1st_party' : order.party_classification
+    order.participant_code     = participant_code
+    order.beneficiary_account_no  = account_number
+    order.classification = order.classification === 'unclassified' ? '1st_party' : order.classification
     order.status               = 'successful'
-    order.anomalous_reason     = undefined
+    order.internal_reason     = undefined
     order.credit_date          = new Date().toISOString()
     order.ops_handler          = ACTOR.name
     order.updated_at           = new Date().toISOString()
@@ -422,7 +425,7 @@ export function retryTask({ id, comment }: { id: string; comment?: string }): Pr
   const order = orderById(task.depositOrderId)
   if (order) {
     order.status           = 'successful'
-    order.anomalous_reason = undefined
+    order.internal_reason = undefined
     order.credit_date      = new Date().toISOString()
     order.ops_handler      = ACTOR.name
     order.updated_at       = new Date().toISOString()
@@ -437,9 +440,9 @@ export function classifyTask({ id, classification }: { id: string; classificatio
   if (!task) return Promise.reject(new Error('Task not found'))
   const order = orderById(task.depositOrderId)
   if (order) {
-    order.party_classification = classification
+    order.classification = classification
     order.status               = 'successful'
-    order.anomalous_reason     = undefined
+    order.internal_reason     = undefined
     order.credit_date          = new Date().toISOString()
     order.ops_handler          = ACTOR.name
     order.updated_at           = new Date().toISOString()
@@ -459,7 +462,7 @@ export function fillFields({ id, fields }: { id: string; fields: Record<string, 
       if (v) (order as any)[k] = v
     }
     order.status           = 'successful'
-    order.anomalous_reason = undefined
+    order.internal_reason = undefined
     order.credit_date      = new Date().toISOString()
     order.ops_handler      = ACTOR.name
     order.updated_at       = new Date().toISOString()
@@ -491,7 +494,7 @@ export function approveScreening({ id, comment }: { id: string; comment?: string
   if (order) {
     order.screening_result = 'pass'
     order.status           = 'successful'
-    order.anomalous_reason = undefined
+    order.internal_reason = undefined
     order.credit_date      = new Date().toISOString()
     order.ops_handler      = ACTOR.name
     order.updated_at       = new Date().toISOString()
@@ -623,8 +626,6 @@ export interface ChannelAccountsFilter {
   client_q?:           string
   /** Comma-separated participant statuses. */
   participant_status?: string
-  /** Comma-separated member statuses. */
-  member_status?:      string
   mapping_status?:     MappingStatus | ''
   /** Free-text search across channel account / user channel account / client / reference. */
   q?:                  string
@@ -639,7 +640,6 @@ export function listChannelAccounts(filter: ChannelAccountsFilter = {}): Promise
   const lc = (s?: string) => s?.trim().toLowerCase()
   const channels  = filter.channel ? filter.channel.split(',') : []
   const pStatuses = filter.participant_status ? filter.participant_status.split(',') : []
-  const mStatuses = filter.member_status ? filter.member_status.split(',') : []
   const chanAcct  = lc(filter.channel_account)
   const refCode   = lc(filter.reference_code)
   const userAcct  = lc(filter.user_channel_account)
@@ -655,11 +655,10 @@ export function listChannelAccounts(filter: ChannelAccountsFilter = {}): Promise
   if (filter.account_type)   items = items.filter(c => c.account_type === filter.account_type)
   if (filter.mapping_status) items = items.filter(c => c.mapping_status === filter.mapping_status)
   if (pStatuses.length) items = items.filter(c => pStatuses.includes(c.participant_status))
-  if (mStatuses.length) items = items.filter(c => mStatuses.includes(c.member_status))
   if (chanAcct) items = items.filter(c => c.channel_account_number.toLowerCase().includes(chanAcct))
   if (refCode)  items = items.filter(c => (c.reference_code ?? '').toLowerCase().includes(refCode))
   if (userAcct) items = items.filter(c => c.user_channel_account_number.toLowerCase().includes(userAcct))
-  if (currency) items = items.filter(c => c.currency.toLowerCase().includes(currency))
+  if (currency) items = items.filter(c => c.currency.some(cur => cur.toLowerCase().includes(currency)))
   if (clientNm) items = items.filter(c => c.client_name.toLowerCase().includes(clientNm))
   if (partCode) items = items.filter(c => (c.participant_code ?? '').toLowerCase().includes(partCode))
   if (clientQ)  items = items.filter(c =>
@@ -691,21 +690,20 @@ export interface CreateChannelAccountPayload {
   channel_account_number: string
   user_channel_account_number: string
   account_type:           AccountType
-  currency:               string
+  currency:               string[]
   mapping_status:         MappingStatus
   /** Client identity — in a real system auto-populated via CAMP lookup on Participant Code entry. */
   client_name:            string
   participant_code:       string | null
-  beneficiary:            ChannelAccount['beneficiary']
   bank_details:           ChannelAccount['bank_details']
   intermediary_bank:      ChannelAccount['intermediary_bank']
 }
 
 /** POST /channel-accounts — Add New Entry (§7.4). Reference Code is system-generated (null here). */
 export function createChannelAccount(payload: CreateChannelAccountPayload): Promise<ChannelAccount> {
-  const key = acctKey(payload.payment_channel, payload.channel_account_number, payload.account_type)
+  const key = acctKey(payload.payment_channel, payload.user_channel_account_number, payload.account_type)
   const dup = channelAccts.some(c => !c.archived &&
-    acctKey(c.payment_channel, c.channel_account_number, c.account_type) === key)
+    acctKey(c.payment_channel, c.user_channel_account_number, c.account_type) === key)
   if (dup) {
     return Promise.reject(new Error('A mapping with this Payment Channel + Channel Account Number + Account Type already exists.'))
   }
@@ -717,13 +715,11 @@ export function createChannelAccount(payload: CreateChannelAccountPayload): Prom
     user_channel_account_number: payload.user_channel_account_number.trim(),
     account_type:           payload.account_type,
     reference_code:         null,
-    currency:               payload.currency.trim().toUpperCase(),
+    currency:               payload.currency.map(c => c.trim().toUpperCase()).filter(Boolean),
     client_name:            payload.client_name.trim(),
     participant_code:       payload.participant_code?.trim() || null,
     participant_status:     'active',
-    member_status:          'active',
     mapping_status:         payload.mapping_status,
-    beneficiary:            payload.beneficiary,
     bank_details:           payload.bank_details,
     intermediary_bank:      payload.intermediary_bank,
     archived:               false,
@@ -741,10 +737,10 @@ export interface UpdateChannelAccountPayload {
   /** GLDB entries may correct these; non-GLDB account numbers are read-only. */
   channel_account_number?: string
   user_channel_account_number?: string
+  currency?:               string[]
   mapping_status?:         MappingStatus
   bank_details?:           ChannelAccount['bank_details']
   intermediary_bank?:      ChannelAccount['intermediary_bank']
-  beneficiary?:            ChannelAccount['beneficiary']
 }
 
 /** PATCH /channel-accounts/:id — Edit Entry (§7.4). Client identity fields stay read-only. */
@@ -753,20 +749,20 @@ export function updateChannelAccount(payload: UpdateChannelAccountPayload): Prom
   if (!acct) return Promise.reject(new Error('Channel account not found'))
 
   const isGldb = acct.payment_channel === 'GLDB'
-  // Non-GLDB: channel account number + user channel account number are read-only (§7.4 Edit Entry).
-  if (isGldb && payload.channel_account_number != null) {
-    const next = payload.channel_account_number.trim()
+  // Non-GLDB: account number fields are read-only (§7.4 Edit Entry).
+  if (isGldb && payload.user_channel_account_number != null) {
+    const next = payload.user_channel_account_number.trim()
     const key  = acctKey(acct.payment_channel, next, acct.account_type)
     const clash = channelAccts.some(c => c.id !== acct.id && !c.archived &&
-      acctKey(c.payment_channel, c.channel_account_number, c.account_type) === key)
+      acctKey(c.payment_channel, c.user_channel_account_number, c.account_type) === key)
     if (clash) return Promise.reject(new Error('Another active mapping already uses this Channel Account Number for this channel + account type.'))
-    acct.channel_account_number = next
+    acct.user_channel_account_number = next
   }
-  if (isGldb && payload.user_channel_account_number != null) acct.user_channel_account_number = payload.user_channel_account_number.trim()
+  if (isGldb && payload.channel_account_number != null) acct.channel_account_number = payload.channel_account_number.trim()
+  if (payload.currency != null)          acct.currency = payload.currency.map(c => c.trim().toUpperCase()).filter(Boolean)
   if (payload.mapping_status != null)    acct.mapping_status = payload.mapping_status
   if (payload.bank_details != null)      acct.bank_details = payload.bank_details
   if (payload.intermediary_bank !== undefined) acct.intermediary_bank = payload.intermediary_bank
-  if (payload.beneficiary != null)       acct.beneficiary = payload.beneficiary
 
   acct.updated_at = new Date().toISOString()
   pushAcctHistory(acct, 'ACCOUNT_UPDATED')
@@ -868,7 +864,7 @@ export function bulkUploadChannelAccounts(payload: BulkUploadPayload): Promise<B
       } else {
         // overwrite: update mutable fields of the existing row
         existing.user_channel_account_number = row.user_channel_account_number
-        existing.currency           = row.currency
+        existing.currency           = [row.currency]
         existing.participant_code   = row.participant_code
         existing.client_name        = row.client_name
         existing.updated_at         = now
@@ -887,13 +883,11 @@ export function bulkUploadChannelAccounts(payload: BulkUploadPayload): Promise<B
       user_channel_account_number: row.user_channel_account_number,
       account_type:           row.account_type,
       reference_code:         null,
-      currency:               row.currency,
+      currency:               [row.currency],
       client_name:            row.client_name,
       participant_code:       row.participant_code,
       participant_status:     'active',
-      member_status:          'active',
       mapping_status:         'active',
-      beneficiary:            { name: row.client_name, address: '—', country: '—' },
       bank_details:           { bank_name: 'Green Link Digital Bank (GLDB)', account_number: row.channel_account_number, swift_code: 'GLDBSGSG', country_code: 'SG', bank_address: '88 Market Street, Floor 30, CapitaSpring, Singapore 048948' },
       intermediary_bank:      null,
       archived:               false,
@@ -952,6 +946,7 @@ export interface ReconResultsFilter {
   cycle_id?:        string
   transaction_id?:  string
   channel?:         string
+  recon_type?:      string
   /** Comma-separated outcome types (multi-select). */
   outcome?:         string
   severity?:        ReconSeverity | ''
@@ -990,6 +985,7 @@ export function listReconResults(filter: ReconResultsFilter = {}): Promise<Pagin
   if (filter.resolved === 'resolved') items = items.filter(r => !!r.resolved_at)
 
   if (filter.channel)   items = items.filter(r => r.payment_channel === filter.channel)
+  if (filter.recon_type) items = items.filter(r => r.recon_type === filter.recon_type)
   if (filter.severity)  items = items.filter(r => r.severity === filter.severity)
   if (outcomes.length)  items = items.filter(r => outcomes.includes(r.outcome))
   if (txid)  items = items.filter(r => (r.transaction_id ?? '').toLowerCase().includes(txid))
@@ -1030,6 +1026,7 @@ export function resolveReconResult(payload: ResolveReconPayload): Promise<ReconR
   if (!payload.resolution_note.trim()) return Promise.reject(new Error('A resolution note is required.'))
   rec.resolved_at      = new Date().toISOString()
   rec.resolution_note  = payload.resolution_note.trim()
+  rec.resolved_by      = ACTOR.name
   rec.correction_order = payload.correction_order?.trim() || null
   return tick(rec)
 }

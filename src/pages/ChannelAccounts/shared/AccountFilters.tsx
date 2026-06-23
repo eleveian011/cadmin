@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { CdsButton, CdsInput, CdsStackedListbox } from '../../../components/cds'
 import {
-  CHANNEL_OPTIONS, ACCOUNT_TYPE_OPTIONS, CLIENT_STATUS_OPTIONS, EMPTY_ACCOUNT_FILTERS,
+  CHANNEL_OPTIONS, ACCOUNT_TYPE_OPTIONS, CLIENT_STATUS_OPTIONS, MAPPING_STATUS_OPTIONS, CURRENCY_OPTIONS, EMPTY_ACCOUNT_FILTERS,
 } from './helpers'
 
 /* ─── Filter board ───────────────────────────────────────────── */
@@ -30,6 +30,8 @@ export function AccountFilters({ applied, onApply, onReset, count, t }) {
   const channelOpts = useMemo(() => withAll(t('channelAccount.filter.allChannels'), CHANNEL_OPTIONS), [t])
   const typeOpts    = useMemo(() => withAll(t('channelAccount.filter.allTypes'), ACCOUNT_TYPE_OPTIONS, o => t(`channelAccount.accountType.${o}`)), [t])
   const statusOpts  = useMemo(() => withAll(t('channelAccount.filter.allStatuses'), CLIENT_STATUS_OPTIONS, o => t(`channelAccount.clientStatus.${o}`)), [t])
+  const mappingOpts = useMemo(() => withAll(t('channelAccount.filter.allStatuses'), MAPPING_STATUS_OPTIONS, o => t(`channelAccount.mappingStatus.${o}`)), [t])
+  const currencyOpts = useMemo(() => withAll(t('channelAccount.filter.allCurrencies'), CURRENCY_OPTIONS), [t])
 
   const textCell = (key, label, placeholder) => (
     <div className={CELL}>
@@ -53,18 +55,18 @@ export function AccountFilters({ applied, onApply, onReset, count, t }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {selectCell('channel', t('channelAccount.col.channel'), channelOpts)}
         {selectCell('account_type', t('channelAccount.col.accountType'), typeOpts)}
+        {textCell('user_channel_account', t('channelAccount.col.userChannelAccountNumber'), t('channelAccount.filter.userChannelAccountPlaceholder'))}
         {textCell('channel_account', t('channelAccount.col.channelAccountNumber'), t('channelAccount.filter.accountNumberPlaceholder'))}
-        {textCell('client_q', t('channelAccount.filter.client'), t('channelAccount.filter.clientPlaceholder'))}
       </div>
 
       {/* Expanded — remaining filters */}
       {expanded && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {textCell('client_q', t('channelAccount.filter.client'), t('channelAccount.filter.clientPlaceholder'))}
           {textCell('reference_code', t('channelAccount.col.referenceCode'), t('channelAccount.filter.referenceCodePlaceholder'))}
-          {textCell('user_channel_account', t('channelAccount.col.userChannelAccountNumber'), t('channelAccount.filter.userChannelAccountPlaceholder'))}
-          {textCell('currency', t('channelAccount.col.currency'), t('channelAccount.filter.currencyPlaceholder'))}
-          {selectCell('participant_status', t('channelAccount.col.participantStatus'), statusOpts)}
-          {selectCell('member_status', t('channelAccount.col.memberStatus'), statusOpts)}
+          {selectCell('currency', t('channelAccount.col.currency'), currencyOpts)}
+          {selectCell('participant_status', t('channelAccount.col.clientStatusCol'), statusOpts)}
+          {selectCell('mapping_status', t('channelAccount.col.channelAccountStatus'), mappingOpts)}
         </div>
       )}
 

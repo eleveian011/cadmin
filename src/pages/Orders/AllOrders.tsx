@@ -16,9 +16,16 @@ import { MarkRefundedModal } from './shared/OrderActionModals'
 
 const PER_PAGE_DEFAULT = 20
 
-// All Orders (Full Transaction Query) hides only the long-tail ops columns by default.
+// Full Transaction tab — many columns available; hide the long tail by default,
+// Ops reveals what they need via Manage Columns.
 const DEFAULT_HIDDEN = new Set([
-  'matched_rule_step', 'screening_result', 'ops_handler', 'remarks', 'created_at',
+  'sub_status', 'transaction_type', 'order_category',
+  'channel_account_no', 'credited_amount', 'channel_fee_amount', 'service_fee_amount',
+  'counterparty_account_no', 'counterparty_bank_swift_bic',
+  'counterparty_bank_country', 'counterparty_country', 'payment_reference',
+  'beneficiary_account_no', 'beneficiary_bank_name', 'beneficiary_bank_swift_bic',
+  'reference_code', 'matched_rule_step', 'screening_result',
+  'ops_handler', 'remarks', 'updated_at',
 ])
 
 // Columns that must always stay visible / non-reorderable.

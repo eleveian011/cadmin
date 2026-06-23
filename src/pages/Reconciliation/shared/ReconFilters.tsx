@@ -6,7 +6,7 @@ import {
   CdsButton, CdsInput, CdsStackedListbox, CdsDateRangePicker, CdsDropdownPanel,
 } from '../../../components/cds'
 import {
-  CHANNEL_OPTIONS, SEVERITY_OPTIONS, OUTCOME_OPTIONS, EMPTY_RECON_FILTERS,
+  CHANNEL_OPTIONS, SEVERITY_OPTIONS, OUTCOME_OPTIONS, RECON_TYPE_OPTIONS, EMPTY_RECON_FILTERS,
 } from './helpers'
 
 const LABEL = 'type-caption font-semibold text-(--text) mb-1 block'
@@ -62,6 +62,7 @@ export function ReconFilters({ tab, applied, onApply, onReset, t }) {
 
   const channelOpts  = useMemo(() => withAll(t('recon.filter.allChannels'), CHANNEL_OPTIONS), [t])
   const severityOpts = useMemo(() => withAll(t('recon.filter.allSeverities'), SEVERITY_OPTIONS, o => t(`recon.severity.${o}`)), [t])
+  const reconTypeOpts = useMemo(() => withAll(t('recon.filter.allTypes'), RECON_TYPE_OPTIONS, o => t(`recon.reconType.${o}`)), [t])
 
   const textCell = (key, label, placeholder) => (
     <div className={CELL}>
@@ -95,6 +96,7 @@ export function ReconFilters({ tab, applied, onApply, onReset, t }) {
       {/* Expanded */}
       {expanded && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {selectCell('recon_type', t('recon.col.reconType'), reconTypeOpts)}
           {textCell('cycle_id', t('recon.filter.cycleId'), t('recon.filter.cycleIdPlaceholder'))}
           {/* Age range (days) */}
           <div className={CELL}>

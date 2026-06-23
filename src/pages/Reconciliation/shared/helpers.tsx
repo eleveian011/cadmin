@@ -21,6 +21,7 @@ export const CHANNEL_TONE: Record<ReconChannel, BadgeTone> = {
 
 export const CHANNEL_OPTIONS: ReconChannel[] = ['GLDB', 'SGB', 'TransferMate', 'Tazapay']
 export const SEVERITY_OPTIONS: ReconSeverity[] = ['critical', 'high', 'medium', 'low']
+export const RECON_TYPE_OPTIONS = ['hourly', 'daily']
 
 /** All discrepancy outcome types shown on the page (Match is audit-only, excluded). */
 export const OUTCOME_OPTIONS = [
@@ -89,6 +90,7 @@ export function toReconQuery(f: any) {
     cycle_id:       f.cycle_id?.trim() || undefined,
     transaction_id: f.transaction_id?.trim() || undefined,
     channel:        f.channel || undefined,
+    recon_type:     f.recon_type || undefined,
     outcome:        f.outcome?.length ? f.outcome.join(',') : undefined,
     severity:       f.severity || undefined,
     age_min:        num(f.age_min),
@@ -99,7 +101,7 @@ export function toReconQuery(f: any) {
 }
 
 export const EMPTY_RECON_FILTERS = {
-  cycle_id: '', transaction_id: '', channel: '', outcome: [], severity: '',
+  cycle_id: '', transaction_id: '', channel: '', recon_type: '', outcome: [], severity: '',
   age_min: '', age_max: '', resolved_from: null, resolved_to: null,
 }
 

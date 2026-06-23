@@ -1,63 +1,37 @@
 // @ts-nocheck
-// Human-readable summary builder + copy-to-clipboard text (§6.4).
-import type { GldbWebhookPayload } from '../../../types/gldb-webhook'
-import type { ChannelAccount } from '../../../types/channel-account'
-import { formatAmount, formatYmd, lookupKeyOf } from './parse'
+// Manual Booking Summary builder (§6.4) — produces a labelled field list Ops can
+// copy line-by-line (or all at once) into the booking workflow. Static placeholder
+// values ("to be determined" / "to be calculated by the system" / "Paid by Me")
+// are intentional — they're filled later by the system or Ops.
+import { formatAmount, lookupKeyOf } from './parse'
 
-/** Build the plain-text "Manual Booking Summary" Ops can paste into Lark (§6.4). */
-export function buildSummaryText(
-  payload: GldbWebhookPayload,
-  matches: ChannelAccount[],
-): string {
-  const acct = lookupKeyOf(payload) ?? '(not provided)'
-  const amount = formatAmount(payload.amount).text ?? '(not provided)'
-  const na = (v?: string | null) => (v && String(v).trim() ? String(v) : '(not provided)')
+export interface SummaryRow { label: string; value: string }
 
-  const lines: string[] = []
-  lines.push('═══════════════════════════════════════════')
-  lines.push('  GLDB Deposit — Manual Booking Summary')
-  lines.push('═══════════════════════════════════════════')
-  lines.push(`  Transaction ID    : ${na(payload.eventReference)}`)
-  lines.push(`  Sender            : ${na(payload.senderAcctNm)} (${na(payload.senderAcctNo)})`)
-  lines.push(`  Amount            : ${amount} ${na(payload.currencyTypeCd)}`)
-  lines.push(`  Value Date        : ${formatYmd(payload.valueDate) ?? '(not provided)'}`)
-  lines.push(`  Trade Date        : ${formatYmd(payload.tradeDate) ?? '(not provided)'}`)
-  lines.push(`  Payment Ref       : ${na(payload.paymentRef)}`)
-  lines.push(`  Receiving Account : ${acct} (${na(payload.receiverAcctNm)})`)
-  lines.push(`  Bank Code         : ${na(payload.receiverBankCd)}`)
-  lines.push(`  Source            : ${na(payload.source)}`)
-  lines.push('')
+/** Build the ordered booking-summary rows from the webhook + payee match. */
+export function buildSummaryRows(payload, matches, t): SummaryRow[] {
+  const na = (v) => (v && String(v).trim() ? String(v) : t('gldbParser.notProvided'))
+  const acct = lookupKeyOf(payload)
+  const currency = payload.currencyTypeCd?.trim()
+  const amount = formatAmount(payload.amount).text
+  const accountType = matches.length
+    ? `${t(`channelAccount.accountType.${matches[0].account_type}`)} ${t('gldbParser.booking.accountWord')}`
+    : t('gldbParser.booking.payeeNotIdentified')
 
-  if (matches.length === 0) {
-    lines.push('  ┌─ Payee: NOT FOUND ─────────────────────┐')
-    lines.push(`  Account Searched  : ${acct}`)
-    lines.push('  No mapping entry found for this account number.')
-    lines.push('')
-    lines.push('  Action Items:')
-    lines.push('  - Investigate the account number / check GLDB portal')
-    lines.push(`  - Sender name   : ${na(payload.senderAcctNm)}`)
-    lines.push(`  - Receiver name : ${na(payload.receiverAcctNm)}`)
-    lines.push('  - After identifying the payee, update the Mapping Table')
-    return lines.join('\n')
-  }
+  return [
+    { label: t('gldbParser.booking.account'),              value: accountType },
+    { label: t('gldbParser.booking.currency'),             value: na(currency) },
+    { label: t('gldbParser.booking.serviceFees'),          value: t('gldbParser.booking.paidByMe') },
+    { label: t('gldbParser.booking.amountSent'),           value: amount ? `${amount}${currency ? ' ' + currency : ''}` : t('gldbParser.notProvided') },
+    { label: t('gldbParser.booking.coboFeeRate'),          value: t('gldbParser.booking.toBeDetermined') },
+    { label: t('gldbParser.booking.serviceFees'),          value: t('gldbParser.booking.toBeCalculated') },
+    { label: t('gldbParser.booking.amountReceived'),       value: t('gldbParser.booking.toBeCalculated') },
+    { label: t('gldbParser.booking.transactionReference'), value: na(payload.paymentRef) },
+    { label: t('gldbParser.booking.purposeOfDeposit'),     value: na(payload.remark) },
+    { label: t('gldbParser.booking.destinationLabel'),     value: na(acct) },
+  ]
+}
 
-  matches.forEach((m, i) => {
-    const head = matches.length > 1 ? `  ┌─ Payee Match ${i + 1} of ${matches.length} ──────────────┐` : '  ┌─ Payee: FOUND ─────────────────────────┐'
-    lines.push(head)
-    lines.push(`  Client Name       : ${m.client_name}`)
-    lines.push(`  Participant Code  : ${m.participant_code ?? '(not provided)'}`)
-    lines.push(`  User Channel Acct : ${m.user_channel_account_number}`)
-    lines.push(`  Account Type      : ${m.account_type === 'fiat' ? 'Fiat' : 'Investment Fiat'}`)
-    lines.push(`  Reference Code    : ${m.reference_code ?? '(none)'}`)
-    lines.push(`  Status            : Participant ${m.participant_status} / Member ${m.member_status}`)
-    lines.push('')
-  })
-
-  lines.push('  Action Items:')
-  if (matches.length > 1) {
-    lines.push('  - Multiple Account Types matched — select the correct one based on deposit context')
-  }
-  lines.push('  - Proceed to CAMP Admin → Manual Booking')
-  lines.push(`  - Credit to: ${matches[0].client_name} (${matches[0].participant_code ?? '—'})`)
-  return lines.join('\n')
+/** Flatten rows to copyable text ("Label: Value" per line) for the Copy-all button. */
+export function summaryRowsToText(rows: SummaryRow[]): string {
+  return rows.map(r => `${r.label}: ${r.value}`).join('\n')
 }

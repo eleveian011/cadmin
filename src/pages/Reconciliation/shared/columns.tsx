@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { CdsBadge, CdsCopyButton, CdsTooltip, CdsButton } from '../../../components/cds'
 import {
-  SEVERITY_TONE, CHANNEL_TONE, ageInDays, ageTone, fmtDay, shortValue,
+  SEVERITY_TONE, ageInDays, ageTone, fmtDay, shortValue,
 } from './helpers'
 
 /**
@@ -10,25 +10,55 @@ import {
  * 'resolved' shows Resolved At + Resolution Note instead.
  */
 export function buildReconColumns({ variant, onResolve, t }) {
-  const txid = {
-    key: 'transaction_id', header: t('recon.col.transactionId'), width: '180px', frozen: 'left',
+  const reconId = {
+    key: 'id', header: t('recon.col.reconId'), width: '120px',
     render: (_, row) => (
       <span className="flex items-center gap-1.5 min-w-0">
-        <span className="type-body font-semibold text-(--accent) tabular-nums truncate">
-          {row.transaction_id ?? '—'}
-        </span>
-        {row.transaction_id && <CdsCopyButton text={row.transaction_id} />}
+        <span className="type-body text-(--text) tabular-nums truncate">{row.id}</span>
+        <CdsCopyButton text={row.id} />
+      </span>
+    ),
+  }
+  const reconType = {
+    key: 'recon_type', header: t('recon.col.reconType'), width: '120px',
+    render: (_, row) => (
+      <CdsBadge tone="neutral" soft>{t(`recon.reconType.${row.recon_type}`)}</CdsBadge>
+    ),
+  }
+  const transactionId = {
+    key: 'transaction_id', header: t('recon.col.transactionId'), width: '180px',
+    render: (_, row) => (
+      <span className="flex items-center gap-1.5 min-w-0">
+        {row.transaction_id
+          ? <>
+              <span className="type-body font-semibold text-(--accent) tabular-nums truncate">{row.transaction_id}</span>
+              <CdsCopyButton text={row.transaction_id} />
+            </>
+          : <span className="text-(--subtle)">—</span>}
+      </span>
+    ),
+  }
+  const channelTxnId = {
+    key: 'channel_transaction_id', header: t('recon.col.channelTxnId'), width: '170px',
+    render: (_, row) => (
+      <span className="flex items-center gap-1.5 min-w-0">
+        {row.channel_transaction_id
+          ? <>
+              <span className="type-body text-(--text) tabular-nums truncate">{row.channel_transaction_id}</span>
+              <CdsCopyButton text={row.channel_transaction_id} />
+            </>
+          : <span className="text-(--subtle)">—</span>}
       </span>
     ),
   }
   const channel = {
     key: 'payment_channel', header: t('recon.col.channel'), width: '130px',
-    render: (_, row) => <CdsBadge tone={CHANNEL_TONE[row.payment_channel] ?? 'neutral'}>{row.payment_channel}</CdsBadge>,
+    render: (_, row) => <span className="type-body text-(--text)">{row.payment_channel}</span>,
   }
   const outcome = {
     key: 'outcome', header: t('recon.col.outcome'), width: '200px',
     render: (_, row) => (
-      <CdsBadge tone={SEVERITY_TONE[row.severity]}>{t(`recon.outcome.${row.outcome}`)}</CdsBadge>
+      <CdsBadge tone={SEVERITY_TONE[row.severity]} soft>{t(`recon.outcome.${row.outcome}`)}</CdsBadge>
     ),
   }
   const channelValue = {
@@ -70,11 +100,17 @@ export function buildReconColumns({ variant, onResolve, t }) {
   }
   const severity = {
     key: 'severity', header: t('recon.col.severity'), width: '110px',
-    render: (_, row) => <CdsBadge tone={SEVERITY_TONE[row.severity]}>{t(`recon.severity.${row.severity}`)}</CdsBadge>,
+    render: (_, row) => <CdsBadge tone={SEVERITY_TONE[row.severity]} soft>{t(`recon.severity.${row.severity}`)}</CdsBadge>,
   }
   const resolvedAt = {
     key: 'resolved_at', header: t('recon.col.resolvedAt'), width: '120px',
     render: (_, row) => <span className="type-body text-(--muted) tabular-nums">{fmtDay(row.resolved_at)}</span>,
+  }
+  const resolvedBy = {
+    key: 'resolved_by', header: t('recon.col.resolvedBy'), width: '140px',
+    render: (_, row) => row.resolved_by
+      ? <span className="type-body text-(--text)">{row.resolved_by}</span>
+      : <span className="text-(--subtle)">—</span>,
   }
   const resolutionNote = {
     key: 'resolution_note', header: t('recon.col.resolutionNote'), width: '260px',
@@ -92,8 +128,8 @@ export function buildReconColumns({ variant, onResolve, t }) {
   }
 
   if (variant === 'resolved') {
-    return [txid, channel, outcome, channelValue, orderValue, severity, firstSeen, resolvedAt, resolutionNote]
+    return [reconId, reconType, transactionId, channelTxnId, channel, outcome, channelValue, orderValue, severity, firstSeen, resolvedAt, resolvedBy, resolutionNote]
   }
   // open / cycle
-  return [txid, channel, outcome, channelValue, orderValue, detail, firstSeen, age, cycleCount, severity, actions]
+  return [reconId, reconType, transactionId, channelTxnId, channel, outcome, channelValue, orderValue, detail, firstSeen, age, cycleCount, severity, actions]
 }

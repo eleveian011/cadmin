@@ -99,10 +99,21 @@ function AgeingBadge({ createdAt }) {
  * `hiddenCols` controls which optional columns are hidden; handlers wire row actions.
  */
 export function buildOrderColumns({ variant, hiddenCols, onViewTask, onMarkRefunded, t }) {
+  const h = (k) => hiddenCols.has(k)
+  // Plain text cell helper.
+  const txt = (key, label, width, accessor, opts = {}) => ({
+    key, header: t(label), width, hidden: h(key),
+    render: (_, row) => {
+      const v = accessor(row)
+      return (v == null || v === '')
+        ? <span className="text-(--subtle)">—</span>
+        : <span className={`type-body text-(--text) ${opts.mono ? 'tabular-nums' : ''} ${opts.muted ? 'text-(--muted)' : ''}`}>{v}</span>
+    },
+  })
+  const money = (minor, ccy) => minor == null ? null : `${fmtAmount(minor)} ${ccy ?? ''}`.trim()
+
   const txid = {
-    key: 'transaction_id',
-    header: t('depositOrder.col.transactionId'),
-    width: '210px',
+    key: 'transaction_id', header: t('depositOrder.col.transactionId'), width: '200px',
     render: (_, row) => (
       <span className="flex items-center gap-1.5">
         <span className="type-body text-(--text) tabular-nums">{row.transaction_id}</span>
@@ -110,141 +121,140 @@ export function buildOrderColumns({ variant, hiddenCols, onViewTask, onMarkRefun
       </span>
     ),
   }
+  const channelTxid = {
+    key: 'channel_transaction_id', header: t('depositOrder.col.channelTransactionId'), width: '180px',
+    hidden: h('channel_transaction_id'),
+    render: (_, row) => row.channel_transaction_id
+      ? <span className="flex items-center gap-1.5">
+          <span className="type-body text-(--text) tabular-nums">{row.channel_transaction_id}</span>
+          <CdsCopyButton text={row.channel_transaction_id} />
+        </span>
+      : <span className="text-(--subtle)">—</span>,
+  }
   const status = {
     key: 'status', header: t('depositOrder.col.status'), width: '180px',
-    hidden: hiddenCols.has('status'),
+    hidden: h('status'),
     render: (_, row) => {
       const key = row.status.replaceAll('.', '_')
       return <CdsStatusTag tone={STATUS_TONE[row.status] ?? 'neutral'}>{t(`depositOrder.status.${key}`)}</CdsStatusTag>
     },
   }
+  const subStatus = txt('sub_status', 'depositOrder.col.subStatus', '160px', r => r.sub_status, { muted: true })
+  const internalReason = {
+    key: 'internal_reason', header: t('depositOrder.col.internalReason'), width: '180px',
+    hidden: h('internal_reason'),
+    render: (_, row) => row.internal_reason
+      ? <span className="type-body text-(--text)">{t(`depositOrder.anomalousReason.${row.internal_reason}`)}</span>
+      : <span className="text-(--subtle)">—</span>,
+  }
   const amount = {
-    key: 'amount', header: t('depositOrder.col.amount'), width: '160px',
-    hidden: hiddenCols.has('amount'),
+    key: 'amount', header: t('depositOrder.col.amount'), width: '150px',
+    hidden: h('amount'),
     render: (_, row) => <span className="type-body tabular-nums">{fmtAmount(row.amount_minor)}&nbsp;{row.currency}</span>,
+  }
+  const currency = txt('currency', 'depositOrder.col.currency', '90px', r => r.currency)
+  const creditedAmount = {
+    key: 'credited_amount', header: t('depositOrder.col.creditedAmount'), width: '150px',
+    hidden: h('credited_amount'),
+    render: (_, row) => {
+      const v = money(row.credited_amount_minor, row.credited_currency)
+      return v ? <span className="type-body tabular-nums">{v}</span> : <span className="text-(--subtle)">—</span>
+    },
+  }
+  const channelFee = {
+    key: 'channel_fee_amount', header: t('depositOrder.col.channelFee'), width: '140px',
+    hidden: h('channel_fee_amount'),
+    render: (_, row) => {
+      const v = money(row.channel_fee_amount_minor, row.channel_fee_currency)
+      return v ? <span className="type-body tabular-nums text-(--muted)">{v}</span> : <span className="text-(--subtle)">—</span>
+    },
+  }
+  const serviceFee = {
+    key: 'service_fee_amount', header: t('depositOrder.col.serviceFee'), width: '140px',
+    hidden: h('service_fee_amount'),
+    render: (_, row) => {
+      const v = money(row.service_fee_amount_minor, row.service_fee_currency)
+      return v ? <span className="type-body tabular-nums text-(--muted)">{v}</span> : <span className="text-(--subtle)">—</span>
+    },
   }
   const ageing = {
     key: 'ageing', header: t('depositOrder.col.ageing'), width: '90px',
     render: (_, row) => <AgeingBadge createdAt={row.created_at} />,
   }
-  const anomaly = {
-    key: 'anomalous_reason', header: t('depositOrder.col.anomalousReason'), width: '200px',
-    render: (_, row) => row.anomalous_reason
-      ? <span className="type-body text-(--text)">{t(`depositOrder.anomalousReason.${row.anomalous_reason}`)}</span>
-      : <span className="text-(--subtle)">—</span>,
+  const channel = txt('payment_channel', 'depositOrder.col.paymentChannel', '130px', r => r.payment_channel)
+  const transactionType = txt('transaction_type', 'depositOrder.col.transactionType', '130px', r => r.transaction_type)
+  const orderCategory = txt('order_category', 'depositOrder.col.orderCategory', '120px', r => r.order_category)
+  const bankTransferType = txt('bank_transfer_type', 'depositOrder.col.bankTransferType', '130px', r => r.bank_transfer_type)
+  const channelAccountNo = txt('channel_account_no', 'depositOrder.col.channelAccountNo', '160px', r => r.channel_account_no, { mono: true, muted: true })
+  const accountType = {
+    key: 'account_type', header: t('depositOrder.col.accountType'), width: '140px',
+    hidden: h('account_type'),
+    render: (_, row) => <span className="type-body text-(--text)">{t(`channelAccount.accountType.${row.account_type}`)}</span>,
   }
-  const channel = {
-    key: 'payment_channel', header: t('depositOrder.col.paymentChannel'), width: '130px',
-    hidden: hiddenCols.has('payment_channel'),
-    render: (_, row) => <span className="type-body text-(--text)">{row.payment_channel}</span>,
-  }
-  const valueDate = {
-    key: 'value_date', header: t('depositOrder.col.valueDate'), width: '120px',
-    hidden: hiddenCols.has('value_date'),
-    render: (_, row) => <span className="type-body tabular-nums">{row.value_date ?? '—'}</span>,
-  }
+  const valueDate = txt('value_date', 'depositOrder.col.valueDate', '120px', r => r.value_date, { mono: true })
   const creditDate = {
     key: 'credit_date', header: t('depositOrder.col.creditDate'), width: '140px',
-    hidden: hiddenCols.has('credit_date'),
+    hidden: h('credit_date'),
     render: (_, row) => {
       const p = fmtDateParts(row.credit_date)
-      return p ? (
-        <div className="flex flex-col">
-          <span className="type-body text-(--text) tabular-nums">{p.date}</span>
-          <span className="type-caption text-(--muted) tabular-nums">{p.time}</span>
-        </div>
-      ) : <span className="text-(--subtle)">—</span>
+      return p ? <div className="flex flex-col"><span className="type-body text-(--text) tabular-nums">{p.date}</span><span className="type-caption text-(--muted) tabular-nums">{p.time}</span></div> : <span className="text-(--subtle)">—</span>
     },
   }
-  const senderName = {
-    key: 'sender_name', header: t('depositOrder.col.senderName'), width: '180px',
-    hidden: hiddenCols.has('sender_name'),
-    render: (_, row) => row.sender_name ?? <span className="text-(--subtle)">—</span>,
-  }
-  const senderAccount = {
-    key: 'sender_account', header: t('depositOrder.col.senderAccount'), width: '180px',
-    hidden: hiddenCols.has('sender_account'),
-    render: (_, row) => <span className="type-body text-(--muted) tabular-nums">{row.sender_account ?? '—'}</span>,
-  }
-  const senderSwift = {
-    key: 'sender_bank_swift', header: t('depositOrder.col.senderSwift'), width: '130px',
-    hidden: hiddenCols.has('sender_bank_swift'),
-    render: (_, row) => <span className="type-body text-(--muted) tabular-nums">{row.sender_bank_swift ?? '—'}</span>,
-  }
-  const senderBankName = {
-    key: 'sender_bank_name', header: t('depositOrder.col.senderBankName'), width: '180px',
-    hidden: hiddenCols.has('sender_bank_name'),
-    render: (_, row) => row.sender_bank_name ?? <span className="text-(--subtle)">—</span>,
-  }
+  // Counterparty
+  const cpName = txt('counterparty_name', 'depositOrder.col.counterpartyName', '180px', r => r.counterparty_name)
+  const cpAccount = txt('counterparty_account_no', 'depositOrder.col.counterpartyAccountNo', '180px', r => r.counterparty_account_no, { mono: true, muted: true })
+  const cpBankName = txt('counterparty_bank_name', 'depositOrder.col.counterpartyBankName', '180px', r => r.counterparty_bank_name)
+  const cpSwift = txt('counterparty_bank_swift_bic', 'depositOrder.col.counterpartySwift', '140px', r => r.counterparty_bank_swift_bic, { mono: true, muted: true })
+  const cpBankCountry = txt('counterparty_bank_country', 'depositOrder.col.counterpartyBankCountry', '120px', r => r.counterparty_bank_country)
+  const cpCountry = txt('counterparty_country', 'depositOrder.col.counterpartyCountry', '120px', r => r.counterparty_country)
+  const paymentRef = txt('payment_reference', 'depositOrder.col.paymentReference', '160px', r => r.payment_reference, { mono: true, muted: true })
+  // Beneficiary
   const beneName = {
     key: 'beneficiary_name', header: t('depositOrder.col.beneficiaryName'), width: '180px',
-    hidden: hiddenCols.has('beneficiary_name'),
+    hidden: h('beneficiary_name'),
     render: (_, row) => row.beneficiary_name ?? <span className="text-(--danger-text) italic">{t('depositOrder.unidentified')}</span>,
   }
-  const beneAccount = {
-    key: 'beneficiary_account', header: t('depositOrder.col.beneficiaryAccount'), width: '160px',
-    hidden: hiddenCols.has('beneficiary_account'),
-    render: (_, row) => <span className="type-body text-(--muted) tabular-nums">{row.beneficiary_account ?? '—'}</span>,
-  }
-  const beneCode = {
-    key: 'beneficiary_code', header: t('depositOrder.col.beneficiaryCode'), width: '150px',
-    hidden: hiddenCols.has('beneficiary_code'),
-    render: (_, row) => <span className="type-body text-(--muted)">{row.beneficiary_code ?? '—'}</span>,
-  }
-  const beneBank = {
-    key: 'beneficiary_bank_name', header: t('depositOrder.col.beneficiaryBank'), width: '170px',
-    hidden: hiddenCols.has('beneficiary_bank_name'),
-    render: (_, row) => row.beneficiary_bank_name ?? <span className="text-(--subtle)">—</span>,
-  }
-  const referenceCode = {
-    key: 'reference_code', header: t('depositOrder.col.referenceCode'), width: '150px',
-    hidden: hiddenCols.has('reference_code'),
-    render: (_, row) => <span className="type-body tabular-nums text-(--muted)">{row.reference_code ?? '—'}</span>,
-  }
-  const party = {
-    key: 'party_classification', header: t('depositOrder.col.partyClassification'), width: '120px',
-    hidden: hiddenCols.has('party_classification'),
-    render: (_, row) => row.party_classification === 'unclassified'
+  const beneAccount = txt('beneficiary_account_no', 'depositOrder.col.beneficiaryAccountNo', '160px', r => r.beneficiary_account_no, { mono: true, muted: true })
+  const beneBankName = txt('beneficiary_bank_name', 'depositOrder.col.beneficiaryBank', '170px', r => r.beneficiary_bank_name)
+  const beneSwift = txt('beneficiary_bank_swift_bic', 'depositOrder.col.beneficiarySwift', '140px', r => r.beneficiary_bank_swift_bic, { mono: true, muted: true })
+  const participantCode = txt('participant_code', 'depositOrder.col.participantCode', '150px', r => r.participant_code, { muted: true })
+  const referenceCode = txt('reference_code', 'depositOrder.col.referenceCode', '150px', r => r.reference_code, { mono: true, muted: true })
+  const classification = {
+    key: 'classification', header: t('depositOrder.col.classification'), width: '120px',
+    hidden: h('classification'),
+    render: (_, row) => row.classification === 'unclassified'
       ? <span className="type-body text-(--danger-text) italic">{t('depositOrder.party.unclassified')}</span>
-      : <span className="type-body text-(--muted)">{t(`depositOrder.party.${row.party_classification}`)}</span>,
+      : <span className="type-body text-(--muted)">{t(`depositOrder.party.${row.classification}`)}</span>,
   }
   const ruleStep = {
     key: 'matched_rule_step', header: t('depositOrder.col.matchedRuleStep'), width: '120px',
-    hidden: hiddenCols.has('matched_rule_step'),
+    hidden: h('matched_rule_step'),
     render: (_, row) => row.matched_rule_step != null
       ? <span className="type-body text-(--muted)">Step {row.matched_rule_step}</span>
       : <span className="text-(--subtle)">—</span>,
   }
   const screening = {
     key: 'screening_result', header: t('depositOrder.col.screeningResult'), width: '150px',
-    hidden: hiddenCols.has('screening_result'),
+    hidden: h('screening_result'),
     render: (_, row) => row.screening_result
       ? <CdsBadge tone={SCREENING_TONE[row.screening_result] ?? 'neutral'}>{t(`depositOrder.screening.${row.screening_result}`)}</CdsBadge>
       : <span className="text-(--subtle)">—</span>,
   }
-  const opsHandler = {
-    key: 'ops_handler', header: t('depositOrder.col.opsHandler'), width: '140px',
-    hidden: hiddenCols.has('ops_handler'),
-    render: (_, row) => row.ops_handler ?? <span className="text-(--subtle)">—</span>,
-  }
+  const opsHandler = txt('ops_handler', 'depositOrder.col.opsHandler', '140px', r => r.ops_handler)
   const remarks = {
     key: 'remarks', header: t('depositOrder.col.remarks'), width: '220px',
-    hidden: hiddenCols.has('remarks'),
+    hidden: h('remarks'),
     render: (_, row) => <span className="type-body text-(--muted) line-clamp-2">{row.remarks ?? '—'}</span>,
   }
-  const createdAt = {
-    key: 'created_at', header: t('depositOrder.col.createdAt'), width: '150px',
-    hidden: hiddenCols.has('created_at'),
+  const dateCell = (key, label) => ({
+    key, header: t(label), width: '150px', hidden: h(key),
     render: (_, row) => {
-      const p = fmtDateParts(row.created_at)
-      return p ? (
-        <div className="flex flex-col">
-          <span className="type-body text-(--text) tabular-nums">{p.date}</span>
-          <span className="type-caption text-(--muted) tabular-nums">{p.time}</span>
-        </div>
-      ) : <span className="text-(--subtle)">—</span>
+      const p = fmtDateParts(row[key])
+      return p ? <div className="flex flex-col"><span className="type-body text-(--text) tabular-nums">{p.date}</span><span className="type-caption text-(--muted) tabular-nums">{p.time}</span></div> : <span className="text-(--subtle)">—</span>
     },
-  }
+  })
+  const createdAt = dateCell('created_at', 'depositOrder.col.createdAt')
+  const updatedAt = dateCell('updated_at', 'depositOrder.col.updatedAt')
   const actions = {
     key: '_actions', header: '', width: '1%', frozen: 'right',
     render: (_, row) => (
@@ -252,16 +262,20 @@ export function buildOrderColumns({ variant, hiddenCols, onViewTask, onMarkRefun
     ),
   }
 
-  const head = [txid, status, amount]
-  const mid  = variant === 'abnormal' ? [ageing, anomaly] : []
+  const head = [txid, channelTxid, status]
+  const mid  = variant === 'abnormal' ? [ageing, internalReason] : []
+  // Full field set (§7.12 orders schema) — toggle/reorder via Manage Columns.
   const rest = [
-    channel, valueDate, creditDate,
-    senderName, senderAccount, senderSwift, senderBankName,
-    beneName, beneAccount, beneCode, beneBank,
-    referenceCode, party, ruleStep, screening,
-    opsHandler, remarks, createdAt,
+    subStatus,
+    transactionType, orderCategory, bankTransferType,
+    channel, channelAccountNo, accountType,
+    amount, currency, creditedAmount, channelFee, serviceFee,
+    cpName, cpAccount, cpBankName, cpSwift, cpBankCountry, cpCountry, paymentRef,
+    beneName, beneAccount, beneBankName, beneSwift, participantCode,
+    referenceCode, classification, ruleStep, screening,
+    valueDate, creditDate,
+    opsHandler, remarks, createdAt, updatedAt,
   ]
-  // All Orders is read-only — no frozen action column. Abnormal keeps Task / Mark Refunded.
   const tail = variant === 'abnormal' ? [actions] : []
   return [...head, ...mid, ...rest, ...tail]
 }

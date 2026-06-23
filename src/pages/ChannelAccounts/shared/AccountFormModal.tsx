@@ -1,10 +1,13 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { Check, ChevronDown } from 'lucide-react'
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 import {
-  CdsModal, CdsInput, CdsStackedListbox, useToast,
+  CdsModal, CdsInput, CdsStackedListbox, CdsDropdownPanel, useToast,
 } from '../../../components/cds'
 import { useCreateChannelAccount, useUpdateChannelAccount } from '../../../services/hooks'
-import { CHANNEL_OPTIONS, ACCOUNT_TYPE_OPTIONS } from './helpers'
+import { useClientSearch } from '../../../services/hooks'
+import { CHANNEL_OPTIONS, ACCOUNT_TYPE_OPTIONS, CURRENCY_OPTIONS } from './helpers'
 
 /* ─── Small labeled-field wrapper ───────────────────────────── */
 
@@ -20,25 +23,132 @@ function Field({ label, required, hint, children }) {
   )
 }
 
+/* ─── Client ⇄ Participant linked search ──────────────────────────────────────
+ * Type into either Client Name or Participant Code; search CAMP; pick a result →
+ * both fields fill and lock (read-only). A "Change" link clears the lock so Ops
+ * can re-search. On edit, the client identity is always locked (read-only).
+ */
+function ClientPicker({ form, set, locked, t }) {
+  const [field, setField] = useState<'name' | 'code' | null>(null) // which input is being typed
+  const [q, setQ] = useState('')
+  const { data } = useClientSearch(q, { limit: 8 })
+  const results = data?.items ?? []
+
+  const pick = (c) => {
+    set({ client_name: c.client_name, participant_code: c.participant_code })
+    setField(null); setQ('')
+  }
+  const clear = () => set({ client_name: '', participant_code: '' })
+
+  const bound = !!(form.client_name && form.participant_code)
+
+  // Read-only display once both are bound (or on edit).
+  if (locked || bound) {
+    return (
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <Field label={t('channelAccount.col.clientName')} required>
+          <CdsInput size="md" value={form.client_name} disabled className="bg-(--disabled-surface) text-(--disabled-text)" />
+        </Field>
+        <Field label={t('channelAccount.col.participantCode')} required
+          hint={!locked ? undefined : t('channelAccount.form.identityReadOnly')}>
+          <div className="flex items-center gap-2">
+            <CdsInput size="md" value={form.participant_code} disabled className="bg-(--disabled-surface) text-(--disabled-text) flex-1" />
+            {!locked && (
+              <button type="button" onClick={clear}
+                className="type-body-sm font-semibold text-(--accent) hover:text-(--accent-hover) cursor-pointer whitespace-nowrap">
+                {t('channelAccount.form.change')}
+              </button>
+            )}
+          </div>
+        </Field>
+      </div>
+    )
+  }
+
+  const SearchBox = ({ which, value, placeholder }) => (
+    <Popover className="relative">
+      <CdsInput
+        size="md"
+        value={field === which ? q : value}
+        onChange={e => { setField(which); setQ(e.target.value) }}
+        onClear={() => { setField(which); setQ('') }}
+        placeholder={placeholder}
+      />
+      {field === which && q.trim() && results.length > 0 && (
+        <div className="absolute z-1200 mt-1 w-full">
+          <CdsDropdownPanel className="w-full p-1.5 max-h-64 overflow-y-auto">
+            {results.map(c => (
+              <button key={c.participant_code} type="button" onClick={() => pick(c)}
+                className="w-full flex flex-col gap-0.5 rounded-md px-2.5 py-1.5 text-left hover:bg-(--item-hover) cursor-pointer">
+                <span className="type-body text-(--text)">{c.client_name}</span>
+                <span className="type-caption text-(--muted) tabular-nums">{c.participant_code} · {c.parent_node}</span>
+              </button>
+            ))}
+          </CdsDropdownPanel>
+        </div>
+      )}
+    </Popover>
+  )
+
+  return (
+    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+      <Field label={t('channelAccount.col.clientName')} required hint={t('channelAccount.form.clientSearchHint')}>
+        <SearchBox which="name" value={form.client_name} placeholder={t('channelAccount.form.clientNamePlaceholder')} />
+      </Field>
+      <Field label={t('channelAccount.col.participantCode')} required hint={t('channelAccount.form.participantSearchHint')}>
+        <SearchBox which="code" value={form.participant_code} placeholder="PART-…" />
+      </Field>
+    </div>
+  )
+}
+
+/* ─── Currency multi-select ───────────────────────────────────── */
+function CurrencyMultiSelect({ value, onChange, t }) {
+  const label = value.length === 0
+    ? t('channelAccount.form.currencyPlaceholder')
+    : value.join(', ')
+  const toggle = (c) => onChange(value.includes(c) ? value.filter(v => v !== c) : [...value, c])
+  return (
+    <Popover className="relative">
+      <PopoverButton className="w-full flex items-center justify-between gap-2 rounded-md border border-(--border) bg-(--surface) px-3 py-2 type-body text-(--text) hover:bg-(--item-hover) outline-none focus:border-(--accent) cursor-pointer">
+        <span className={value.length ? 'text-(--text)' : 'text-(--subtle)'}>{label}</span>
+        <ChevronDown size={15} className="text-(--muted) shrink-0" />
+      </PopoverButton>
+      <PopoverPanel anchor="bottom start" className="z-1200 mt-1">
+        <CdsDropdownPanel className="w-48 p-1.5 max-h-64 overflow-y-auto">
+          {CURRENCY_OPTIONS.map(c => {
+            const on = value.includes(c)
+            return (
+              <button key={c} type="button" onClick={() => toggle(c)}
+                className="w-full flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left type-body text-(--text) hover:bg-(--item-hover) cursor-pointer">
+                <span>{c}</span>
+                {on && <Check size={15} className="text-(--accent) shrink-0" />}
+              </button>
+            )
+          })}
+        </CdsDropdownPanel>
+      </PopoverPanel>
+    </Popover>
+  )
+}
+
 const EMPTY = {
   payment_channel: 'GLDB',
-  channel_account_number: '',
   user_channel_account_number: '',
+  channel_account_number: '',
   account_type: 'fiat',
-  currency: '',
+  currency: [],
   client_name: '',
   participant_code: '',
-  // bank info
-  ben_name: '', ben_address: '', ben_country: '',
   bank_name: '', bank_account: '', bank_swift: '', bank_country: '', bank_address: '',
 }
 
 /**
- * Add / Edit entry modal (§7.4 Operations, v0.2).
- * - Add: all fields editable except Reference Code (system-generated).
- * - Edit: GLDB → channel account number + user channel account number editable;
- *   non-GLDB → both read-only. Client identity fields (name, participant code,
- *   statuses) are always read-only after creation.
+ * Add / Edit Mapping modal (§7.4 Operations, v0.2).
+ * - Client identity at top: search either Client Name or Participant Code; picking
+ *   a result fills + locks both.
+ * - Channel Account Number (Internal) is optional (GLDB-only quirk).
+ * - Currency is multi-select. Bank details follow the channel account directly.
  */
 export function AccountFormModal({ account, open, onClose, t }) {
   const isEdit = !!account
@@ -54,15 +164,12 @@ export function AccountFormModal({ account, open, onClose, t }) {
     if (account) {
       setForm({
         payment_channel: account.payment_channel,
-        channel_account_number: account.channel_account_number,
         user_channel_account_number: account.user_channel_account_number,
+        channel_account_number: account.channel_account_number,
         account_type: account.account_type,
         currency: account.currency,
         client_name: account.client_name,
         participant_code: account.participant_code ?? '',
-        ben_name: account.beneficiary.name,
-        ben_address: account.beneficiary.address,
-        ben_country: account.beneficiary.country,
         bank_name: account.bank_details.bank_name,
         bank_account: account.bank_details.account_number,
         bank_swift: account.bank_details.swift_code,
@@ -75,17 +182,13 @@ export function AccountFormModal({ account, open, onClose, t }) {
   }, [open, account?.id])
 
   const isGldb = form.payment_channel === 'GLDB'
-  // Edit: channel account number + user channel account number editable only for GLDB.
-  const channelAcctReadOnly = isEdit && !isGldb
-  const userAcctReadOnly    = isEdit && !isGldb
-  // Client identity is read-only on edit (auto-populated from CAMP).
-  const identityReadOnly    = isEdit
+  const userAcctReadOnly = isEdit && !isGldb
+  const internalReadOnly = isEdit && !isGldb
 
-  // Validation: Participant Code required; key mapping fields present.
+  // Validation: user channel account number, ≥1 currency, client identity present.
   const valid = !!(
-    form.channel_account_number.trim() &&
     form.user_channel_account_number.trim() &&
-    form.currency.trim() &&
+    form.currency.length > 0 &&
     form.client_name.trim() &&
     form.participant_code.trim()
   )
@@ -94,40 +197,34 @@ export function AccountFormModal({ account, open, onClose, t }) {
   const accountTypeOpts = ACCOUNT_TYPE_OPTIONS.map(a => ({ value: a, label: t(`channelAccount.accountType.${a}`) }))
 
   const buildBank = () => ({
-    beneficiary:  { name: form.ben_name.trim(), address: form.ben_address.trim() || '—', country: form.ben_country.trim() || '—' },
-    bank_details: {
-      bank_name: form.bank_name.trim(), account_number: form.bank_account.trim(),
-      swift_code: form.bank_swift.trim(), country_code: form.bank_country.trim(), bank_address: form.bank_address.trim(),
-    },
+    bank_name: form.bank_name.trim(), account_number: form.bank_account.trim(),
+    swift_code: form.bank_swift.trim(), country_code: form.bank_country.trim(), bank_address: form.bank_address.trim(),
   })
 
   const handleSubmit = () => {
     if (!valid) return
     if (isEdit) {
-      const bank = buildBank()
       update.mutateAsync({
         id: account.id,
-        channel_account_number: isGldb ? form.channel_account_number.trim() : undefined,
         user_channel_account_number: isGldb ? form.user_channel_account_number.trim() : undefined,
-        beneficiary:  bank.beneficiary,
-        bank_details: bank.bank_details,
+        channel_account_number: isGldb ? form.channel_account_number.trim() : undefined,
+        currency: form.currency,
+        bank_details: buildBank(),
         intermediary_bank: account.intermediary_bank,
       })
         .then(() => { toast.show(t('channelAccount.toast.updated')); onClose() })
         .catch(e => toast.show(e?.message || 'Update failed'))
     } else {
-      const bank = buildBank()
       create.mutateAsync({
         payment_channel: form.payment_channel,
-        channel_account_number: form.channel_account_number.trim(),
         user_channel_account_number: form.user_channel_account_number.trim(),
+        channel_account_number: form.channel_account_number.trim(),
         account_type: form.account_type,
-        currency: form.currency.trim(),
+        currency: form.currency,
         mapping_status: 'active',
         client_name: form.client_name.trim(),
         participant_code: form.participant_code.trim() || null,
-        beneficiary:  bank.beneficiary,
-        bank_details: bank.bank_details,
+        bank_details: buildBank(),
         intermediary_bank: null,
       })
         .then(() => { toast.show(t('channelAccount.toast.created')); onClose() })
@@ -157,48 +254,41 @@ export function AccountFormModal({ account, open, onClose, t }) {
       dismissOnBackdrop
     >
       <div className="flex flex-col gap-5">
-        {/* Mapping */}
+        {/* Client identity — at the top (no heading) */}
+        <section>
+          <ClientPicker form={form} set={set} locked={isEdit} t={t} />
+        </section>
+
+        {/* Channel account + bank details */}
         <section>
           <div className="type-body-sm font-semibold text-(--text) mb-2.5">{t('channelAccount.detail.mapping')}</div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
             <Field label={t('channelAccount.col.channel')} required>
-              <CdsStackedListbox
-                size="md" buttonWidthClass="w-full"
+              <CdsStackedListbox size="md" buttonWidthClass="w-full"
                 value={form.payment_channel}
                 onChange={isEdit ? undefined : (v) => set({ payment_channel: v })}
-                options={channelOpts}
-              />
+                options={channelOpts} />
             </Field>
             <Field label={t('channelAccount.col.accountType')} required>
-              <CdsStackedListbox
-                size="md" buttonWidthClass="w-full"
+              <CdsStackedListbox size="md" buttonWidthClass="w-full"
                 value={form.account_type}
                 onChange={isEdit ? undefined : (v) => set({ account_type: v })}
-                options={accountTypeOpts}
-              />
-            </Field>
-            <Field label={t('channelAccount.col.channelAccountNumber')} required
-              hint={channelAcctReadOnly ? t('channelAccount.form.nonGldbReadOnly') : undefined}>
-              <CdsInput
-                size="md" value={form.channel_account_number}
-                onChange={e => set({ channel_account_number: e.target.value })}
-                disabled={channelAcctReadOnly}
-                className={channelAcctReadOnly ? ro : ''}
-                placeholder="GLDB-8800-…"
-              />
+                options={accountTypeOpts} />
             </Field>
             <Field label={t('channelAccount.col.userChannelAccountNumber')} required
               hint={userAcctReadOnly ? t('channelAccount.form.nonGldbReadOnly') : undefined}>
-              <CdsInput
-                size="md" value={form.user_channel_account_number}
+              <CdsInput size="md" value={form.user_channel_account_number}
                 onChange={e => set({ user_channel_account_number: e.target.value })}
-                disabled={userAcctReadOnly}
-                className={userAcctReadOnly ? ro : ''}
-                placeholder="UCA-…"
-              />
+                disabled={userAcctReadOnly} className={userAcctReadOnly ? ro : ''} placeholder="…" />
+            </Field>
+            <Field label={t('channelAccount.col.channelAccountNumber')}
+              hint={internalReadOnly ? t('channelAccount.form.nonGldbReadOnly') : undefined}>
+              <CdsInput size="md" value={form.channel_account_number}
+                onChange={e => set({ channel_account_number: e.target.value })}
+                disabled={internalReadOnly} className={internalReadOnly ? ro : ''} placeholder="GLDB-8800-…" />
             </Field>
             <Field label={t('channelAccount.col.currency')} required>
-              <CdsInput size="md" value={form.currency} onChange={e => set({ currency: e.target.value })} placeholder="SGD" />
+              <CurrencyMultiSelect value={form.currency} onChange={(v) => set({ currency: v })} t={t} />
             </Field>
             {isEdit && (
               <Field label={t('channelAccount.col.referenceCode')} hint={t('channelAccount.form.refCodeHint')}>
@@ -206,49 +296,9 @@ export function AccountFormModal({ account, open, onClose, t }) {
               </Field>
             )}
           </div>
-        </section>
 
-        {/* Client identity */}
-        <section>
-          <div className="type-body-sm font-semibold text-(--text) mb-1">{t('channelAccount.detail.client')}</div>
-          <p className="type-caption text-(--subtle) mb-2.5">
-            {identityReadOnly ? t('channelAccount.form.identityReadOnly') : t('channelAccount.form.identityHint')}
-          </p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            <Field label={t('channelAccount.col.clientName')} required>
-              <CdsInput size="md" value={form.client_name} onChange={e => set({ client_name: e.target.value })}
-                disabled={identityReadOnly} className={identityReadOnly ? ro : ''} />
-            </Field>
-            <span />
-            <Field label={t('channelAccount.col.participantCode')} required>
-              <CdsInput size="md" value={form.participant_code} onChange={e => set({ participant_code: e.target.value })}
-                disabled={identityReadOnly} className={identityReadOnly ? ro : ''} placeholder="PART-…" />
-            </Field>
-          </div>
-        </section>
-
-        {/* Beneficiary */}
-        <section>
-          <div className="type-body-sm font-semibold text-(--text) mb-2.5">{t('channelAccount.bank.beneficiary')}</div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            <Field label={t('channelAccount.bank.beneficiaryName')}>
-              <CdsInput size="md" value={form.ben_name} onChange={e => set({ ben_name: e.target.value })} />
-            </Field>
-            <Field label={t('channelAccount.bank.beneficiaryCountry')}>
-              <CdsInput size="md" value={form.ben_country} onChange={e => set({ ben_country: e.target.value })} />
-            </Field>
-            <div className="col-span-2">
-              <Field label={t('channelAccount.bank.beneficiaryAddress')}>
-                <CdsInput size="md" value={form.ben_address} onChange={e => set({ ben_address: e.target.value })} />
-              </Field>
-            </div>
-          </div>
-        </section>
-
-        {/* Bank details */}
-        <section>
-          <div className="type-body-sm font-semibold text-(--text) mb-2.5">{t('channelAccount.bank.bankDetails')}</div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+          {/* Bank details — part of the channel account, no separate heading */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-3">
             <Field label={t('channelAccount.bank.bankName')}>
               <CdsInput size="md" value={form.bank_name} onChange={e => set({ bank_name: e.target.value })} />
             </Field>

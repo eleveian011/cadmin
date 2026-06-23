@@ -69,6 +69,7 @@ export function toOrderQuery(f: any) {
     party:            f.party || undefined,
     reason:           f.reason || undefined,
     txid:             f.txid?.trim() || undefined,
+    channel_txid:     f.channel_txid?.trim() || undefined,
     sender:           f.sender?.trim() || undefined,
     sender_bank:      f.sender_bank?.trim() || undefined,
     beneficiary:      f.beneficiary?.trim() || undefined,

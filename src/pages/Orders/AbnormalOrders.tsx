@@ -17,8 +17,16 @@ import { MarkRefundedModal } from './shared/OrderActionModals'
 const PER_PAGE_DEFAULT = 20
 
 // Abnormal tab leans on ops-detail columns; hide only the long tail by default.
-const DEFAULT_HIDDEN = new Set(['screening_result', 'ops_handler', 'remarks', 'created_at'])
-const PINNED_COLS = new Set(['transaction_id', '_actions', 'ageing', 'anomalous_reason'])
+const DEFAULT_HIDDEN = new Set([
+  'sub_status', 'transaction_type', 'order_category', 'bank_transfer_type',
+  'channel_account_no', 'account_type', 'credited_amount', 'channel_fee_amount', 'service_fee_amount',
+  'counterparty_account_no', 'counterparty_bank_name', 'counterparty_bank_swift_bic',
+  'counterparty_bank_country', 'counterparty_country', 'payment_reference',
+  'beneficiary_account_no', 'beneficiary_bank_name', 'beneficiary_bank_swift_bic',
+  'reference_code', 'matched_rule_step', 'screening_result', 'value_date', 'credit_date',
+  'ops_handler', 'remarks', 'created_at', 'updated_at',
+])
+const PINNED_COLS = new Set(['transaction_id', '_actions', 'ageing', 'internal_reason'])
 
 export default function AbnormalOrders({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation()

@@ -81,8 +81,8 @@ function PayeeCard({ account, t }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
         <PayeeField label={t('channelAccount.col.participantCode')} value={account.participant_code ?? '—'} copyable />
         <PayeeField label={t('channelAccount.col.userChannelAccountNumber')} value={account.user_channel_account_number} copyable />
-        <PayeeField label={t('channelAccount.col.participantStatus')} value={t(`channelAccount.clientStatus.${account.participant_status}`)} />
-        <PayeeField label={t('channelAccount.col.currency')} value={account.currency} />
+        <PayeeField label={t('channelAccount.col.clientStatusCol')} value={t(`channelAccount.clientStatus.${account.participant_status}`)} />
+        <PayeeField label={t('channelAccount.col.currency')} value={account.currency.join(', ')} />
         <PayeeField label={t('channelAccount.col.referenceCode')} value={account.reference_code ?? '—'} />
       </div>
 

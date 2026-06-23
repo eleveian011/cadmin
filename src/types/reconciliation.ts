@@ -26,6 +26,9 @@ export type ReconOutcome =
 /** Severity tier (§7.13.2 / §7.13.5). */
 export type ReconSeverity = 'critical' | 'high' | 'medium' | 'low'
 
+/** Reconciliation cadence: hourly auto-recon (§7.13) vs T+1 end-of-day (separate PRD). */
+export type ReconType = 'hourly' | 'daily'
+
 export type ReconChannel = 'GLDB' | 'SGB' | 'TransferMate' | 'Tazapay'
 
 /** Snapshot of the fields compared on each side (channel_value / order_value JSONB). */
@@ -49,6 +52,8 @@ export interface ReconResult {
   payment_channel:        ReconChannel
   outcome:                ReconOutcome
   severity:               ReconSeverity
+  /** Reconciliation cadence (hourly auto-recon vs T+1 end-of-day). */
+  recon_type:             ReconType
   channel_value:          ReconValueSnapshot | null
   order_value:            ReconValueSnapshot | null
   /** Human-readable description of the discrepancy. */
@@ -59,6 +64,8 @@ export interface ReconResult {
   last_seen_at:           string
   resolved_at:            string | null
   resolution_note:        string | null
+  /** Ops identity who resolved the discrepancy (null while open). */
+  resolved_by:            string | null
   /** Optional correction-order reference captured at resolution time. */
   correction_order:       string | null
   /** Consecutive cycles this discrepancy has been observed. */

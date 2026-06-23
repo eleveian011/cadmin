@@ -14,7 +14,7 @@ import {
 // grid, draft/Apply model, expand/collapse. Single-select dropdowns + text inputs.
 
 export const EMPTY_ORDER_FILTERS = {
-  order_type: '', txid: '', status: '', channel: '', currency: '',
+  order_type: '', txid: '', channel_txid: '', status: '', channel: '', currency: '',
   amount_min: '', amount_max: '',
   date_from: null, date_to: null,
   party: '', reason: '',
@@ -64,8 +64,8 @@ export function OrderFilters({ applied, onApply, onReset, count, t }) {
     <div className="rounded-lg border border-(--border) bg-(--surface) p-4 flex flex-col gap-3">
       {/* Default — 4 filters */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {selectCell('order_type', t('depositOrder.filter.orderType'), orderTypeOpts)}
-        {textCell('txid', t('depositOrder.filter.orderId'), t('depositOrder.filter.orderIdPlaceholder'))}
+        {textCell('txid', t('depositOrder.filter.transactionId'), t('depositOrder.filter.transactionIdPlaceholder'))}
+        {textCell('channel_txid', t('depositOrder.col.channelTransactionId'), t('depositOrder.filter.channelTxidPlaceholder'))}
         {selectCell('status', t('depositOrder.filter.status'), statusOpts)}
         {selectCell('channel', t('depositOrder.filter.channel'), channelOpts)}
       </div>
@@ -73,6 +73,7 @@ export function OrderFilters({ applied, onApply, onReset, count, t }) {
       {/* Expanded — remaining filters */}
       {expanded && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {selectCell('order_type', t('depositOrder.filter.orderType'), orderTypeOpts)}
           {selectCell('currency', t('depositOrder.filter.currency'), currencyOpts)}
           {/* Amount range */}
           <div className={CELL}>
@@ -89,8 +90,8 @@ export function OrderFilters({ applied, onApply, onReset, count, t }) {
             <CdsDateRangePicker size="md" value={{ from: draft.date_from, to: draft.date_to }}
               onChange={(v) => set({ date_from: v.from, date_to: v.to })} />
           </div>
-          {selectCell('party', t('depositOrder.filter.partyType'), partyOpts)}
-          {selectCell('reason', t('depositOrder.col.anomalousReason'), reasonOpts)}
+          {selectCell('party', t('depositOrder.col.classification'), partyOpts)}
+          {selectCell('reason', t('depositOrder.col.internalReason'), reasonOpts)}
           {textCell('sender', t('depositOrder.filter.sender'), t('depositOrder.filter.senderPlaceholder'))}
           {textCell('sender_bank', t('depositOrder.filter.senderBank'), t('depositOrder.filter.senderBankPlaceholder'))}
           {textCell('beneficiary', t('depositOrder.filter.beneficiary'), t('depositOrder.filter.beneficiaryPlaceholder'))}

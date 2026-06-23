@@ -1,10 +1,9 @@
 // @ts-nocheck
-import { AlertTriangle } from 'lucide-react'
 import {
-  CdsStatusTag, CdsSwitch, CdsCopyButton, CdsTooltip,
+  CdsStatusTag, CdsCopyButton, CdsTooltip,
 } from '../../../components/cds'
 import {
-  STATUS_TONE, hasStatusException, isExceptionStatus,
+  STATUS_TONE, isExceptionStatus,
 } from './helpers'
 
 /* ─── Status badge with exception tooltip ───────────────────── */
@@ -30,20 +29,6 @@ function StatusBadge({ status, label, t }) {
 export function buildChannelAccountColumns({ hiddenCols, onToggleMapping, actionsCell, t }) {
   const has = (k: string) => hiddenCols?.has(k)
 
-  // Leading header-less column: carries the status-exception indicator so the
-  // signal sits at the row start, separate from the data columns.
-  const exceptionFlag = {
-    key: '_exception', header: '', width: '44px', frozen: 'left',
-    align: 'center',
-    render: (_, row) => {
-      if (!hasStatusException(row.participant_status, row.member_status)) return null
-      return (
-        <CdsTooltip content={t('channelAccount.exception.rowTooltip')}>
-          <AlertTriangle size={14} className="shrink-0 text-(--warning-text)" />
-        </CdsTooltip>
-      )
-    },
-  }
   const channel = {
     key: 'payment_channel', header: t('channelAccount.col.channel'), width: '150px',
     render: (_, row) => <span className="type-body text-(--text)">{row.payment_channel}</span>,
@@ -86,9 +71,9 @@ export function buildChannelAccountColumns({ hiddenCols, onToggleMapping, action
     ),
   }
   const currency = {
-    key: 'currency', header: t('channelAccount.col.currency'), width: '90px',
+    key: 'currency', header: t('channelAccount.col.currency'), width: '120px',
     hidden: has('currency'),
-    render: (_, row) => <span className="type-body font-bold text-(--text)">{row.currency}</span>,
+    render: (_, row) => <span className="type-body font-bold text-(--text)">{row.currency.join(', ')}</span>,
   }
   const clientName = {
     key: 'client_name', header: t('channelAccount.col.clientName'), width: '200px',
@@ -100,24 +85,15 @@ export function buildChannelAccountColumns({ hiddenCols, onToggleMapping, action
     render: (_, row) => <span className="type-body text-(--muted)">{row.participant_code ?? '—'}</span>,
   }
   const participantStatus = {
-    key: 'participant_status', header: t('channelAccount.col.participantStatus'), width: '150px',
+    key: 'participant_status', header: t('channelAccount.col.clientStatusCol'), width: '140px',
     render: (_, row) => <StatusBadge status={row.participant_status} label={t(`channelAccount.clientStatus.${row.participant_status}`)} t={t} />,
   }
-  const memberStatus = {
-    key: 'member_status', header: t('channelAccount.col.memberStatus'), width: '140px',
-    render: (_, row) => <StatusBadge status={row.member_status} label={t(`channelAccount.clientStatus.${row.member_status}`)} t={t} />,
-  }
   const mappingStatus = {
-    key: 'mapping_status', header: t('channelAccount.col.mappingStatus'), width: '120px',
-    frozen: 'left', align: 'center',
+    key: 'mapping_status', header: t('channelAccount.col.channelAccountStatus'), width: '160px',
     render: (_, row) => (
-      <span className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-        <CdsSwitch
-          checked={row.mapping_status === 'active'}
-          onChange={(next) => onToggleMapping(row, next ? 'active' : 'inactive')}
-          ariaLabel={t('channelAccount.col.mappingStatus')}
-        />
-      </span>
+      <CdsStatusTag tone={row.mapping_status === 'active' ? 'success' : 'neutral'}>
+        {t(`channelAccount.mappingStatus.${row.mapping_status}`)}
+      </CdsStatusTag>
     ),
   }
   const actions = {
@@ -125,12 +101,15 @@ export function buildChannelAccountColumns({ hiddenCols, onToggleMapping, action
     render: (_, row) => actionsCell(row),
   }
 
+  // Column order mirrors the filter field order (§7.4):
+  // Channel · Account Type · Channel Account Number · Internal · Client/Participant ·
+  // Reference Code · Currency · Client Status · Channel Account Status.
   return [
-    exceptionFlag, mappingStatus,
     channel, accountType,
-    participantStatus, memberStatus,
-    channelAccountNumber, referenceCode, userChannelAccountNumber,
-    currency, clientName, participantCode,
+    userChannelAccountNumber, channelAccountNumber,
+    clientName, participantCode,
+    referenceCode, currency,
+    participantStatus, mappingStatus,
     actions,
   ]
 }
