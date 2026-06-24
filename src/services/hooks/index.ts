@@ -24,3 +24,5 @@ export {
   useEligibleAssignees, useReassignTask,
 } from './useTasks'
 export type { TaskListParams } from './useTasks'
+export { useRoles, useUpdateRole } from './useUserRoles'
+export type { UpdateRolePayload } from './useUserRoles'

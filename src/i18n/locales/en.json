@@ -17,7 +17,8 @@
     "orders": "Order Management",
     "abnormalOrders": "Pending Transaction",
     "allOrders": "Full Transaction",
-    "channelAccounts": "Fiat Account Mapping"
+    "channelAccounts": "Fiat Account Mapping",
+    "userRoles": "Manage User Role"
   },
   "taskCenter": {
     "title": "Task Center",
@@ -720,6 +721,56 @@
       "open": "No open discrepancies",
       "resolved": "No resolved discrepancies",
       "cycles": "No reconciliation cycles yet"
+    }
+  },
+  "userRole": {
+    "title": "Manage User Role",
+    "subtitle": "Configure the permissions granted to each role.",
+    "permissionsHeader": "Permissions",
+    "field": {
+      "roleName": "Role Name",
+      "roleDesc": "Role Description"
+    },
+    "actions": {
+      "save": "Save changes",
+      "reset": "Reset"
+    },
+    "perm": {
+      "manage_org_users": {
+        "label": "Manage organization users",
+        "desc": "Assign roles, suspend or deactivate users, and invite new users within your organization."
+      },
+      "review_withdraw": {
+        "label": "Review withdraw orders",
+        "desc": "Review and approve or reject withdraw orders."
+      },
+      "submit_withdraw": {
+        "label": "Submit withdraw orders",
+        "desc": "Submit withdraw orders to the Task Center, and cancel an order before it enters review."
+      },
+      "handle_rfi": {
+        "label": "Handle RFI tasks",
+        "desc": "Respond to and resolve Request-for-Information tasks."
+      },
+      "view_task_center": {
+        "label": "View Task Center task list",
+        "desc": "Access the Task Center. The options below depend on this permission."
+      },
+      "view_task_own": {
+        "label": "View tasks assigned to me and unassigned",
+        "desc": "See tasks assigned to you and tasks no one has picked up yet."
+      },
+      "view_task_others": {
+        "label": "View tasks assigned to others",
+        "desc": "See tasks currently assigned to other users."
+      },
+      "assign_task": {
+        "label": "Assign and reassign tasks",
+        "desc": "Assign tasks to users and reassign existing tasks."
+      }
+    },
+    "toast": {
+      "saved": "{{role}} permissions saved"
     }
   }
 }

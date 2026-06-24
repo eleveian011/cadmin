@@ -17,6 +17,8 @@ import { depositTasks as tasksSeed }    from '../data/tasks'
 import { clients as clientsSeed }       from '../data/clients'
 import { channelAccounts as channelAccountsSeed } from '../data/channel-accounts'
 import { reconResults as reconSeed, reconCycles as reconCyclesSeed } from '../data/reconciliation'
+import { roleDefinitions as rolesSeed, PERMISSION_CATALOG } from '../data/user-roles'
+import type { RoleDefinition, RoleKey, PermissionMap } from '../types/user-role'
 import type { DepositOrder } from '../types/deposit-order'
 import type { DepositTask, TaskStatus, ClientSearchResult } from '../types/task'
 import type {
@@ -34,6 +36,7 @@ const clients: ClientSearchResult[] = clientsSeed
 const channelAccts: ChannelAccount[] = channelAccountsSeed.map(c => ({ ...c, history: [...c.history] }))
 const reconResults: ReconResult[] = reconSeed.map(r => ({ ...r }))
 const reconCycles:  ReconCycle[]  = reconCyclesSeed.map(c => ({ ...c }))
+const roles:        RoleDefinition[] = rolesSeed.map(r => ({ ...r, permissions: { ...r.permissions } }))
 
 // "Current user" — in a real app this comes from the session.
 const ACTOR = { id: 'ops_002', name: 'Alex Chen' }
@@ -1049,6 +1052,50 @@ export function resolveReconResult(payload: ResolveReconPayload): Promise<ReconR
   rec.resolved_by      = ACTOR.name
   rec.correction_order = payload.correction_order?.trim() || null
   return tick(rec)
+}
+
+// CHUNK_USER_ROLES
+
+/* ─── Manage User Role — role permission config ──────────────── */
+
+function roleByKey(key: RoleKey): RoleDefinition | undefined {
+  return roles.find(r => r.key === key)
+}
+
+/** GET /roles — the three role definitions with their permission grants. */
+export function listRoles(): Promise<RoleDefinition[]> {
+  return tick(roles.map(r => ({ ...r, permissions: { ...r.permissions } })))
+}
+
+/**
+ * Normalize a permission map against the dependency tree: a child can only be
+ * granted while its parent is granted. Revoking a parent cascades to children.
+ */
+function normalizePermissions(perms: PermissionMap): PermissionMap {
+  const next = { ...perms }
+  for (const node of PERMISSION_CATALOG) {
+    if (node.children && !next[node.key]) {
+      for (const child of node.children) next[child.key] = false
+    }
+  }
+  return next
+}
+
+export interface UpdateRolePayload {
+  key:          RoleKey
+  name?:        string
+  description?: string
+  permissions?: PermissionMap
+}
+
+/** PUT /roles/:key — save a role's name, description, and permission grants. */
+export function updateRole(payload: UpdateRolePayload): Promise<RoleDefinition> {
+  const role = roleByKey(payload.key)
+  if (!role) return Promise.reject(new Error('Role not found'))
+  if (payload.name != null)        role.name = payload.name.trim() || role.name
+  if (payload.description != null) role.description = payload.description
+  if (payload.permissions != null) role.permissions = normalizePermissions(payload.permissions)
+  return tick({ ...role, permissions: { ...role.permissions } })
 }
 
 
