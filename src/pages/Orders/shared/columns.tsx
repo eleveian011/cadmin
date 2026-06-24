@@ -7,6 +7,9 @@ import {
 } from '../../../components/cds'
 import { STATUS_TONE, SCREENING_TONE, fmtAmount, fmtDate, fmtDateParts } from './helpers'
 import { RowActions } from './RowActions'
+import { clients as clientsData } from '../../../data/clients'
+
+const CLIENT_NAME_MAP: Map<string, string> = new Map(clientsData.map(c => [c.participant_code, c.client_name]))
 
 /* ─── Column manager ────────────────────────────────────────── */
 
@@ -200,24 +203,34 @@ export function buildOrderColumns({ variant, hiddenCols, onViewTask, t }) {
       return p ? <div className="flex flex-col"><span className="type-body text-(--text) tabular-nums">{p.date}</span><span className="type-caption text-(--muted) tabular-nums">{p.time}</span></div> : <span className="text-(--subtle)">—</span>
     },
   }
-  // Counterparty
-  const cpName = txt('counterparty_name', 'depositOrder.col.counterpartyName', '180px', r => r.counterparty_name)
-  const cpAccount = txt('counterparty_account_no', 'depositOrder.col.counterpartyAccountNo', '180px', r => r.counterparty_account_no, { mono: true, muted: true })
-  const cpBankName = txt('counterparty_bank_name', 'depositOrder.col.counterpartyBankName', '180px', r => r.counterparty_bank_name)
-  const cpSwift = txt('counterparty_bank_swift_bic', 'depositOrder.col.counterpartySwift', '140px', r => r.counterparty_bank_swift_bic, { mono: true, muted: true })
-  const cpBankCountry = txt('counterparty_bank_country', 'depositOrder.col.counterpartyBankCountry', '120px', r => r.counterparty_bank_country)
-  const cpCountry = txt('counterparty_country', 'depositOrder.col.counterpartyCountry', '120px', r => r.counterparty_country)
+  // Sender (the external payer)
+  const senderName = txt('sender_name', 'depositOrder.col.senderName', '180px', r => r.sender_name)
+  const senderAccount = txt('sender_account_no', 'depositOrder.col.senderAccountNo', '180px', r => r.sender_account_no, { mono: true, muted: true })
+  const senderBankName = txt('sender_bank_name', 'depositOrder.col.senderBankName', '180px', r => r.sender_bank_name)
+  const senderSwift = txt('sender_bank_swift_bic', 'depositOrder.col.senderSwift', '140px', r => r.sender_bank_swift_bic, { mono: true, muted: true })
+  const senderBankCountry = txt('sender_bank_country', 'depositOrder.col.senderBankCountry', '120px', r => r.sender_bank_country)
+  const senderCountry = txt('sender_country', 'depositOrder.col.senderCountry', '120px', r => r.sender_country)
   const paymentRef = txt('payment_reference', 'depositOrder.col.paymentReference', '160px', r => r.payment_reference, { mono: true, muted: true })
-  // Beneficiary
-  const beneName = {
-    key: 'beneficiary_name', header: t('depositOrder.col.beneficiaryName'), width: '180px',
-    hidden: h('beneficiary_name'),
-    render: (_, row) => row.beneficiary_name ?? <span className="text-(--danger-text) italic">{t('depositOrder.unidentified')}</span>,
+  // Recipient (the MetaComp client receiving funds)
+  const participantCode = txt('participant_code', 'depositOrder.col.participantCode', '170px', r => r.participant_code, { muted: true })
+  const clientName = {
+    key: 'client_name', header: t('depositOrder.col.clientName'), width: '180px',
+    hidden: h('client_name'),
+    render: (_, row) => {
+      const name = row.participant_code ? CLIENT_NAME_MAP.get(row.participant_code) : null
+      return name
+        ? <span className="type-body text-(--text)">{name}</span>
+        : <span className="text-(--subtle)">—</span>
+    },
   }
-  const beneAccount = txt('beneficiary_account_no', 'depositOrder.col.beneficiaryAccountNo', '160px', r => r.beneficiary_account_no, { mono: true, muted: true })
-  const beneBankName = txt('beneficiary_bank_name', 'depositOrder.col.beneficiaryBank', '170px', r => r.beneficiary_bank_name)
-  const beneSwift = txt('beneficiary_bank_swift_bic', 'depositOrder.col.beneficiarySwift', '140px', r => r.beneficiary_bank_swift_bic, { mono: true, muted: true })
-  const participantCode = txt('participant_code', 'depositOrder.col.participantCode', '150px', r => r.participant_code, { muted: true })
+  const recipientName = {
+    key: 'recipient_name', header: t('depositOrder.col.recipientName'), width: '180px',
+    hidden: h('recipient_name'),
+    render: (_, row) => row.recipient_name ?? <span className="text-(--danger-text) italic">{t('depositOrder.unidentified')}</span>,
+  }
+  const recipientAccount = txt('recipient_account_no', 'depositOrder.col.recipientAccountNo', '160px', r => r.recipient_account_no, { mono: true, muted: true })
+  const recipientBankName = txt('recipient_bank_name', 'depositOrder.col.recipientBank', '170px', r => r.recipient_bank_name)
+  const recipientSwift = txt('recipient_bank_swift_bic', 'depositOrder.col.recipientSwift', '140px', r => r.recipient_bank_swift_bic, { mono: true, muted: true })
   const referenceCode = txt('reference_code', 'depositOrder.col.referenceCode', '150px', r => r.reference_code, { mono: true, muted: true })
   const classification = {
     key: 'classification', header: t('depositOrder.col.classification'), width: '120px',
@@ -266,12 +279,13 @@ export function buildOrderColumns({ variant, hiddenCols, onViewTask, t }) {
   const mid  = variant === 'abnormal' ? [ageing, internalReason] : []
   // Full field set (§7.12 orders schema) — toggle/reorder via Manage Columns.
   const rest = [
-    subStatus,
+    subStatus, internalReason,
     transactionType, orderCategory, bankTransferType,
     channel, channelAccountNo, accountType,
     amount, currency, creditedAmount, channelFee, serviceFee,
-    cpName, cpAccount, cpBankName, cpSwift, cpBankCountry, cpCountry, paymentRef,
-    beneName, beneAccount, beneBankName, beneSwift, participantCode,
+    participantCode, clientName, recipientName, recipientAccount,
+    senderName, senderAccount, senderBankName, senderSwift, senderBankCountry, senderCountry, paymentRef,
+    recipientBankName, recipientSwift,
     referenceCode, classification, ruleStep, screening,
     valueDate, creditDate,
     opsHandler, remarks, createdAt, updatedAt,

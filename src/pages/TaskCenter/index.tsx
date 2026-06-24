@@ -1154,7 +1154,9 @@ const EMPTY_FILTERS = {
 const FILTER_LABEL = 'type-caption font-semibold text-(--text) mb-1 block'
 const FILTER_CELL = 'flex flex-col min-w-0'
 
-function TaskFilterBoard({ applied, onApply, onReset, onExport, exporting }) {
+const FYI_TYPES: DepositTaskType[] = ['DEPOSIT_MISSING_FIELDS_FYI', 'DEPOSIT_WEBHOOK_PARSE_FAILURE']
+
+function TaskFilterBoard({ applied, onApply, onReset, onExport, exporting, tab }) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState(applied)
   const [expanded, setExpanded] = useState(false)
@@ -1170,12 +1172,13 @@ function TaskFilterBoard({ applied, onApply, onReset, onExport, exporting }) {
     ...listAssignees().map(a => ({ value: a.id, label: a.name, subLabel: a.role })),
   ], [t])
 
-  const typeOptions = useMemo(() => [
-    { value: '', label: t('taskCenter.filters.allTypes') },
-    ...TASK_TYPES.map(tt => ({ value: tt, label: t(`taskCenter.taskType.${tt}`) })),
-    { value: 'DEPOSIT_MISSING_FIELDS_FYI', label: t('taskCenter.taskType.DEPOSIT_MISSING_FIELDS_FYI') },
-    { value: 'DEPOSIT_WEBHOOK_PARSE_FAILURE', label: t('taskCenter.taskType.DEPOSIT_WEBHOOK_PARSE_FAILURE') },
-  ], [t])
+  const typeOptions = useMemo(() => {
+    const base = tab === 'fyi' ? FYI_TYPES : [...TASK_TYPES, ...FYI_TYPES]
+    return [
+      { value: '', label: t('taskCenter.filters.allTypes') },
+      ...base.map(tt => ({ value: tt, label: t(`taskCenter.taskType.${tt}`) })),
+    ]
+  }, [t, tab])
 
   const waitOptions = useMemo(() => [
     { value: '',         label: t('taskCenter.filters.anyWait') },
@@ -1407,7 +1410,7 @@ export default function TaskCenter() {
 
       <CdsPillTabs value={viewTab} onChange={handleTabChange} items={pillTabs} />
 
-      <TaskFilterBoard applied={filters} onApply={handleApply} onReset={handleReset} onExport={handleExport} exporting={exporting} />
+      <TaskFilterBoard applied={filters} onApply={handleApply} onReset={handleReset} onExport={handleExport} exporting={exporting} tab={viewTab} />
 
       {/* Results summary */}
       <div className="flex items-center gap-2 type-body text-(--muted) -mt-2">

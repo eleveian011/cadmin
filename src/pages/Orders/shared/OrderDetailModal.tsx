@@ -1,6 +1,9 @@
 // @ts-nocheck
 import { CdsModal, CdsBadge, CdsStatusTag, CdsCopyButton } from '../../../components/cds'
 import { STATUS_TONE, fmtAmount, fmtDate } from './helpers'
+import { clients as clientsData } from '../../../data/clients'
+
+const CLIENT_NAME_MAP: Map<string, string> = new Map(clientsData.map(c => [c.participant_code, c.client_name]))
 
 /**
  * Read-only full detail of a deposit order (PRD §7.11 detail view).
@@ -66,26 +69,29 @@ export function OrderDetailModal({ order, open, onClose, t }) {
           <Field label={t('depositOrder.col.bankTransferType')} value={order.bank_transfer_type} />
           <Field label={t('depositOrder.col.channelAccountNo')} value={order.channel_account_no} span={2} />
           <Field label={t('depositOrder.col.accountType')} value={t(`channelAccount.accountType.${order.account_type}`)} />
+          <Field label={t('depositOrder.col.participantCode')} value={order.participant_code} copyText={order.participant_code} />
+          <Field label={t('depositOrder.col.clientName')} value={order.participant_code ? CLIENT_NAME_MAP.get(order.participant_code) ?? null : null} />
+          <Field label={t('depositOrder.col.recipientName')} value={order.recipient_name} />
           <Field label={t('depositOrder.col.paymentReference')} value={order.payment_reference} />
           <Field label={t('depositOrder.col.referenceCode')} value={order.reference_code} />
           <Field label={t('depositOrder.col.classification')} value={t(`depositOrder.party.${order.classification}`)} />
         </Group>
 
         <Group title={t('depositOrder.detail.sender')}>
-          <Field label={t('depositOrder.col.counterpartyName')} value={order.counterparty_name} span={2} />
-          <Field label={t('depositOrder.col.counterpartyAccountNo')} value={order.counterparty_account_no} span={2} />
-          <Field label={t('depositOrder.col.counterpartyBankName')} value={order.counterparty_bank_name} span={2} />
-          <Field label={t('depositOrder.col.counterpartySwift')} value={order.counterparty_bank_swift_bic} />
-          <Field label={t('depositOrder.col.counterpartyBankCountry')} value={order.counterparty_bank_country} />
-          <Field label={t('depositOrder.col.counterpartyCountry')} value={order.counterparty_country} />
+          <Field label={t('depositOrder.col.senderName')} value={order.sender_name} span={2} />
+          <Field label={t('depositOrder.col.senderAccountNo')} value={order.sender_account_no} span={2} />
+          <Field label={t('depositOrder.col.senderBankName')} value={order.sender_bank_name} span={2} />
+          <Field label={t('depositOrder.col.senderSwift')} value={order.sender_bank_swift_bic} />
+          <Field label={t('depositOrder.col.senderBankCountry')} value={order.sender_bank_country} />
+          <Field label={t('depositOrder.col.senderCountry')} value={order.sender_country} />
         </Group>
 
         <Group title={t('depositOrder.detail.beneficiary')}>
-          <Field label={t('depositOrder.col.beneficiaryName')} value={order.beneficiary_name} span={2} />
-          <Field label={t('depositOrder.col.beneficiaryAccountNo')} value={order.beneficiary_account_no} span={2} />
-          <Field label={t('depositOrder.col.beneficiaryBank')} value={order.beneficiary_bank_name} span={2} />
-          <Field label={t('depositOrder.col.beneficiarySwift')} value={order.beneficiary_bank_swift_bic} />
           <Field label={t('depositOrder.col.participantCode')} value={order.participant_code} />
+          <Field label={t('depositOrder.col.recipientName')} value={order.recipient_name} span={2} />
+          <Field label={t('depositOrder.col.recipientAccountNo')} value={order.recipient_account_no} span={2} />
+          <Field label={t('depositOrder.col.recipientBank')} value={order.recipient_bank_name} span={2} />
+          <Field label={t('depositOrder.col.recipientSwift')} value={order.recipient_bank_swift_bic} />
         </Group>
 
         <Group title={t('depositOrder.detail.matching')}>

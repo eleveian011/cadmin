@@ -20,9 +20,9 @@ const PER_PAGE_DEFAULT = 20
 const DEFAULT_HIDDEN = new Set([
   'sub_status', 'transaction_type', 'order_category',
   'channel_account_no', 'credited_amount', 'channel_fee_amount', 'service_fee_amount',
-  'counterparty_account_no', 'counterparty_bank_swift_bic',
-  'counterparty_bank_country', 'counterparty_country', 'payment_reference',
-  'beneficiary_account_no', 'beneficiary_bank_name', 'beneficiary_bank_swift_bic',
+  'sender_account_no', 'sender_bank_swift_bic',
+  'sender_bank_country', 'sender_country', 'payment_reference',
+  'recipient_account_no', 'recipient_bank_name', 'recipient_bank_swift_bic',
   'reference_code', 'matched_rule_step', 'screening_result',
   'ops_handler', 'remarks', 'updated_at',
 ])

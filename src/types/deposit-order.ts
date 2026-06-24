@@ -66,19 +66,19 @@ export interface DepositOrder {
   internal_reason?:     InternalReason
   // Task Center integration
   task_center_id:       string | null
-  // Counterparty (the external payer / sender)
-  counterparty_name:        string | null
-  counterparty_account_no:  string | null
-  counterparty_bank_name:   string | null
-  counterparty_bank_swift_bic: string | null
-  counterparty_bank_country: string | null
-  counterparty_country:     string | null
+  // Sender (the external payer)
+  sender_name:        string | null
+  sender_account_no:  string | null
+  sender_bank_name:   string | null
+  sender_bank_swift_bic: string | null
+  sender_bank_country: string | null
+  sender_country:     string | null
   payment_reference:        string | null
-  // Beneficiary (the MetaComp client receiving funds)
-  beneficiary_name:     string | null
-  beneficiary_account_no: string | null
-  beneficiary_bank_name: string | null
-  beneficiary_bank_swift_bic: string | null
+  // Recipient (the MetaComp client receiving funds)
+  recipient_name:     string | null
+  recipient_account_no: string | null
+  recipient_bank_name: string | null
+  recipient_bank_swift_bic: string | null
   participant_code:     string | null
   // Matching
   reference_code:       string | null
